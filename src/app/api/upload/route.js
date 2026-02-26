@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
-import { writeFile, mkdir } from 'fs/promises';
-import { join } from 'path';
+import dbConnect from '@/lib/db';
+import Media from '@/models/Media';
 
 export async function POST(request) {
     try {
+        await dbConnect();
         const formData = await request.formData();
         const file = formData.get('file');
 
@@ -14,21 +15,20 @@ export async function POST(request) {
         const bytes = await file.arrayBuffer();
         const buffer = Buffer.from(bytes);
 
-        const uploadDir = join(process.cwd(), 'public', 'uploads');
+        // Store in MongoDB
+        const media = await Media.create({
+            filename: file.name,
+            contentType: file.type,
+            data: buffer
+        });
 
-        // Ensure directory exists
-        try {
-            await mkdir(uploadDir, { recursive: true });
-        } catch (err) {
-            // Ignore if exists
-        }
-
-        const filename = `${Date.now()}-${file.name.replace(/\s+/g, '-')}`;
-        const path = join(uploadDir, filename);
-        await writeFile(path, buffer);
-
-        return NextResponse.json({ success: true, url: `/uploads/${filename}` });
+        // The URL will now point to our new media serving endpoint
+        return NextResponse.json({
+            success: true,
+            url: `/api/media/${media._id}`
+        });
     } catch (error) {
+        console.error("Upload error:", error);
         return NextResponse.json({ success: false, error: error.message }, { status: 500 });
     }
 }
