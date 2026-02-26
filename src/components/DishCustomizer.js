@@ -59,17 +59,50 @@ export default function DishCustomizer({ dish, onClose, onAddToCart }) {
             backdropFilter: 'blur(4px)',
             padding: '1rem'
         }}>
-            <div style={{
+            <div className="dish-customizer-modal" style={{
                 backgroundColor: 'white',
                 width: '100%',
                 maxWidth: '600px',
-                maxHeight: '90vh',
-                borderRadius: '2rem',
-                overflow: 'hidden',
+                height: '92vh',
                 display: 'flex',
                 flexDirection: 'column',
-                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
+                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+                position: 'relative'
             }}>
+                {/* Absolute Close Button - Enhanced Touch Area and Priority */}
+                <div
+                    onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        onClose();
+                    }}
+                    onPointerDown={(e) => e.stopPropagation()} // Stop bubbling on touch too
+                    style={{
+                        position: 'absolute',
+                        top: '1.2rem',
+                        right: '1.2rem',
+                        backgroundColor: 'white',
+                        borderRadius: '50%',
+                        width: '44px',
+                        height: '44px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        boxShadow: '0 8px 30px rgba(0,0,0,0.4)',
+                        zIndex: 2000,
+                        cursor: 'pointer',
+                        border: 'none',
+                        transition: 'transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+                        touchAction: 'manipulation',
+                        WebkitTapHighlightColor: 'transparent',
+                        userSelect: 'none'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.15)'}
+                    onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                >
+                    <X size={26} color="#1A1A1A" strokeWidth={3} />
+                </div>
+
                 {/* Header with Image */}
                 <div style={{ position: 'relative', height: '300px', backgroundColor: '#000', overflow: 'hidden' }}>
                     {/* Blurred background layer to fill gaps */}
@@ -80,7 +113,8 @@ export default function DishCustomizer({ dish, onClose, onAddToCart }) {
                         backgroundSize: 'cover',
                         backgroundPosition: 'center',
                         filter: 'blur(20px) brightness(0.7)',
-                        opacity: 0.5
+                        opacity: 0.5,
+                        pointerEvents: 'none'
                     }} />
                     <img
                         src={dish.image}
@@ -91,27 +125,10 @@ export default function DishCustomizer({ dish, onClose, onAddToCart }) {
                             height: '100%',
                             objectFit: 'contain',
                             zIndex: 1,
-                            filter: 'drop-shadow(0 0 30px rgba(0,0,0,0.8))'
+                            filter: 'drop-shadow(0 0 30px rgba(0,0,0,0.8))',
+                            pointerEvents: 'none'
                         }}
                     />
-                    <button
-                        onClick={onClose}
-                        style={{
-                            position: 'absolute',
-                            top: '1rem',
-                            right: '1rem',
-                            backgroundColor: 'white',
-                            borderRadius: '50%',
-                            width: '36px',
-                            height: '36px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            boxShadow: '0 4px 10px rgba(0,0,0,0.2)'
-                        }}
-                    >
-                        <X size={20} />
-                    </button>
                 </div>
 
                 <div style={{ padding: '2rem', overflowY: 'auto', flexGrow: 1 }}>
@@ -210,38 +227,39 @@ export default function DishCustomizer({ dish, onClose, onAddToCart }) {
                 </div>
 
                 {/* Footer / Actions */}
-                <div style={{
-                    padding: '1.5rem 2rem',
+                <div className="customizer-footer" style={{
+                    padding: '1rem',
                     borderTop: '1px solid #eee',
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'space-between',
-                    background: '#fcfcfc'
+                    gap: '1rem',
+                    background: '#fcfcfc',
+                    paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))'
                 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', backgroundColor: '#f1f1f1', padding: '0.5rem', borderRadius: '2rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', backgroundColor: '#f1f1f1', padding: '0.4rem 0.8rem', borderRadius: '2rem' }}>
                         <button
                             onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                            style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                            style={{ width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                         >
-                            <Minus size={20} />
+                            <Minus size={18} />
                         </button>
-                        <span style={{ fontWeight: 800, fontSize: '1.2rem', minWidth: '20px', textAlign: 'center' }}>{quantity}</span>
+                        <span style={{ fontWeight: 800, fontSize: '1.1rem', minWidth: '15px', textAlign: 'center' }}>{quantity}</span>
                         <button
                             onClick={() => setQuantity(quantity + 1)}
-                            style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                            style={{ width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                         >
-                            <Plus size={20} />
+                            <Plus size={18} />
                         </button>
                     </div>
 
                     <button
                         onClick={handleConfirm}
                         className="btn-primary"
-                        style={{ flexGrow: 1, marginLeft: '2rem', justifyContent: 'center', padding: '1.2rem' }}
+                        style={{ flexGrow: 1, justifyContent: 'center', padding: '1rem', fontSize: '0.95rem' }}
                     >
-                        <ShoppingBag size={20} />
-                        Ajouter au panier
-                        <span style={{ marginLeft: '1rem', borderLeft: '1px solid rgba(0,0,0,0.1)', paddingLeft: '1rem' }}>
+                        <ShoppingBag size={18} />
+                        <span className="hide-mobile" style={{ marginLeft: '0.5rem' }}>Ajouter</span>
+                        <span style={{ marginLeft: '0.5rem', borderLeft: '1px solid rgba(0,0,0,0.1)', paddingLeft: '0.5rem' }}>
                             {totalPrice.toFixed(2)}€
                         </span>
                     </button>

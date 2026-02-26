@@ -95,7 +95,33 @@ button {
   border: 1px solid rgba(0, 0, 0, 0.03);
 }
 
-.card:hover {
-  box-shadow: var(--shadow-lg);
-  transform: translateY(-6px);
+
+/* Responsive Utilities */
+@media (max-width: 768px) {
+  .dish-customizer-modal {
+    height: 100vh !important;
+    max-height: 100vh !important;
+    border-radius: 0 !important;
+  }
+
+  .customizer-footer {
+    padding-bottom: 2rem !important;
+    position: sticky;
+    bottom: 0;
+    width: 100%;
+    z-index: 10;
+    box-shadow: 0 -10px 20px rgba(0, 0, 0, 0.05);
+  }
+
+  .hide-mobile {
+    display: none !important;
+  }
+}
+
+@media (min-width: 769px) {
+  .dish-customizer-modal {
+    border-radius: 3rem !important;
+    max-height: 90vh !important;
+    height: auto !important;
+  }
 }
