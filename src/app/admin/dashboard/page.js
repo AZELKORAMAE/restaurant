@@ -4,6 +4,8 @@ import { LayoutDashboard, UtensilsCrossed, ShoppingBag, Bell, Plus, LogOut, Imag
 import { signOut } from 'next-auth/react';
 
 import DishForm from '@/components/admin/DishForm';
+import CollectionForm from '@/components/admin/CollectionForm';
+import SupplementForm from '@/components/admin/SupplementForm';
 
 export default function AdminDashboard() {
     const [activeTab, setActiveTab] = useState('orders');
@@ -14,6 +16,8 @@ export default function AdminDashboard() {
     const [selectedOrder, setSelectedOrder] = useState(null);
     const [uploading, setUploading] = useState(false);
     const [showDishForm, setShowDishForm] = useState(false);
+    const [showCollectionForm, setShowCollectionForm] = useState(false);
+    const [showSupplementForm, setShowSupplementForm] = useState(false);
     const [editingDish, setEditingDish] = useState(null);
     const [editingCollection, setEditingCollection] = useState(null);
     const [editingSupplement, setEditingSupplement] = useState(null);
@@ -91,7 +95,7 @@ export default function AdminDashboard() {
                 fetchData();
                 alert(editingDish ? 'Plat mis à jour !' : 'Plat ajouté !');
             } else {
-                alert(`Erreur: ${json.error || 'Une erreur est survenue.'}`);
+                alert(`Erreur: ${json.error || 'Erreur lors de la sauvegarde du plat'}`);
             }
         } catch (err) {
             console.error("Error creating/updating dish:", err);
@@ -112,17 +116,11 @@ export default function AdminDashboard() {
         }
     };
 
-    const handleCreateCollection = async (e) => {
-        e.preventDefault();
-        const name = e.target.name.value;
-        const file = e.target.image.files[0];
-        if (!name && !editingCollection) return;
-
-        let imageUrl = editingCollection?.image;
-        if (file) {
-            imageUrl = await handleFileUpload(file);
+    const handleCreateCollection = async (collectionData) => {
+        if (!collectionData.image) {
+            alert("Erreur: L'image est obligatoire pour une collection.");
+            return;
         }
-
         try {
             const url = editingCollection ? `/api/collections/${editingCollection._id}` : '/api/collections';
             const method = editingCollection ? 'PATCH' : 'POST';
@@ -130,13 +128,16 @@ export default function AdminDashboard() {
             const res = await fetch(url, {
                 method,
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, image: imageUrl }),
+                body: JSON.stringify(collectionData),
             });
             const json = await res.json();
             if (json.success) {
-                e.target.reset();
+                setShowCollectionForm(false);
                 setEditingCollection(null);
                 fetchData();
+                alert(editingCollection ? 'Collection mise à jour !' : 'Collection ajoutée !');
+            } else {
+                alert(`Erreur: ${json.error || 'Erreur lors de la sauvegarde de la collection'}`);
             }
         } catch (err) {
             console.error("Error creating/updating collection:", err);
@@ -154,20 +155,7 @@ export default function AdminDashboard() {
         }
     };
 
-    const handleCreateSupplement = async (e) => {
-        e.preventDefault();
-        const name = e.target.name.value;
-        const price = e.target.price.value;
-        const file = e.target.image.files[0];
-        if ((!name || !price) && !editingSupplement) return;
-
-        let imageUrl = editingSupplement?.image;
-        if (file) {
-            imageUrl = await handleFileUpload(file);
-        } else if (selectedStockIcon) {
-            imageUrl = selectedStockIcon;
-        }
-
+    const handleCreateSupplement = async (supplementData) => {
         try {
             const url = editingSupplement ? `/api/supplements/${editingSupplement._id}` : '/api/supplements';
             const method = editingSupplement ? 'PATCH' : 'POST';
@@ -175,18 +163,16 @@ export default function AdminDashboard() {
             const res = await fetch(url, {
                 method,
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    name,
-                    price: price ? parseFloat(price) : editingSupplement?.price,
-                    image: imageUrl
-                }),
+                body: JSON.stringify(supplementData),
             });
             const json = await res.json();
             if (json.success) {
-                e.target.reset();
+                setShowSupplementForm(false);
                 setEditingSupplement(null);
-                setSelectedStockIcon(null);
                 fetchData();
+                alert(editingSupplement ? 'Supplément mis à jour !' : 'Supplément ajouté !');
+            } else {
+                alert(`Erreur: ${json.error || 'Erreur lors de la sauvegarde du supplément'}`);
             }
         } catch (err) {
             console.error("Error creating/updating supplement:", err);
@@ -215,6 +201,20 @@ export default function AdminDashboard() {
                     collections={collections}
                     availableSupplements={supplements}
                     initialData={editingDish}
+                />
+            )}
+            {(showCollectionForm || editingCollection) && (
+                <CollectionForm
+                    onSave={handleCreateCollection}
+                    onCancel={() => { setShowCollectionForm(false); setEditingCollection(null); }}
+                    initialData={editingCollection}
+                />
+            )}
+            {(showSupplementForm || editingSupplement) && (
+                <SupplementForm
+                    onSave={handleCreateSupplement}
+                    onCancel={() => { setShowSupplementForm(false); setEditingSupplement(null); }}
+                    initialData={editingSupplement}
                 />
             )}
             {/* Sidebar */}
@@ -339,7 +339,17 @@ export default function AdminDashboard() {
 
                     {activeTab === 'dishes' && (
                         <button className="btn-primary" onClick={() => setShowDishForm(true)}>
-                            <Plus size={20} /> Ajouter un Plat
+                            <Plus size={20} /> Nouveau Plat
+                        </button>
+                    )}
+                    {activeTab === 'collections' && (
+                        <button className="btn-primary" onClick={() => setShowCollectionForm(true)}>
+                            <Plus size={20} /> Nouvelle Collection
+                        </button>
+                    )}
+                    {activeTab === 'supplements' && (
+                        <button className="btn-primary" onClick={() => setShowSupplementForm(true)}>
+                            <Plus size={20} /> Nouveau Supplément
                         </button>
                     )}
                 </header>
@@ -459,73 +469,54 @@ export default function AdminDashboard() {
                 )}
 
                 {activeTab === 'dishes' && (
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '1.5rem' }}>
-                        {dishes.map(dish => (
-                            <div key={dish._id} className="card" style={{ padding: '1rem' }}>
-                                <img src={dish.image} alt={dish.name} style={{ width: '100%', height: '150px', objectFit: 'cover', borderRadius: 'var(--radius-lg)', marginBottom: '1rem' }} />
-                                <h3 style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>{dish.name}</h3>
-                                <p style={{ color: 'var(--glovo-gray)', fontSize: '0.9rem', marginBottom: '1rem' }}>{dish.price}€</p>
-                                {dish.supplements && dish.supplements.length > 0 && (
-                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1rem' }}>
-                                        {dish.supplements.map(s => (
-                                            <span key={s._id} style={{
-                                                fontSize: '0.7rem',
-                                                padding: '0.2rem 0.5rem',
-                                                background: '#f3f4f6',
-                                                borderRadius: '1rem',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                gap: '0.3rem'
-                                            }}>
-                                                {s.image && <img src={s.image} style={{ width: '16px', height: '16px', objectFit: 'contain' }} />}
-                                                {s.name}
-                                            </span>
-                                        ))}
+                    <div>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '1.5rem' }}>
+
+                            {dishes.map(dish => (
+                                <div key={dish._id} className="card" style={{ padding: '1rem' }}>
+                                    <img src={dish.image} alt={dish.name} style={{ width: '100%', height: '150px', objectFit: 'cover', borderRadius: 'var(--radius-lg)', marginBottom: '1rem' }} />
+                                    <h3 style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>{dish.name}</h3>
+                                    <p style={{ color: 'var(--glovo-gray)', fontSize: '0.9rem', marginBottom: '1rem' }}>{dish.price}€</p>
+                                    {dish.supplements && dish.supplements.length > 0 && (
+                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1rem' }}>
+                                            {dish.supplements.map(s => (
+                                                <span key={s._id} style={{
+                                                    fontSize: '0.7rem',
+                                                    padding: '0.2rem 0.5rem',
+                                                    background: '#f3f4f6',
+                                                    borderRadius: '1rem',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '0.3rem'
+                                                }}>
+                                                    {s.image && <img src={s.image} style={{ width: '16px', height: '16px', objectFit: 'contain' }} />}
+                                                    {s.name}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    )}
+                                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                        <button
+                                            onClick={() => setEditingDish(dish)}
+                                            style={{ flex: 1, padding: '0.5rem', background: '#f3f4f6', borderRadius: '0.5rem' }}
+                                        >
+                                            Modifier
+                                        </button>
+                                        <button
+                                            onClick={() => handleDeleteDish(dish._id)}
+                                            style={{ flex: 1, padding: '0.5rem', background: '#fee2e2', color: '#dc2626', borderRadius: '0.5rem' }}
+                                        >
+                                            Supprimer
+                                        </button>
                                     </div>
-                                )}
-                                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                    <button
-                                        onClick={() => setEditingDish(dish)}
-                                        style={{ flex: 1, padding: '0.5rem', background: '#f3f4f6', borderRadius: '0.5rem' }}
-                                    >
-                                        Modifier
-                                    </button>
-                                    <button
-                                        onClick={() => handleDeleteDish(dish._id)}
-                                        style={{ flex: 1, padding: '0.5rem', background: '#fee2e2', color: '#dc2626', borderRadius: '0.5rem' }}
-                                    >
-                                        Supprimer
-                                    </button>
                                 </div>
-                            </div>
-                        ))}
+                            ))}
+                        </div>
                     </div>
                 )}
 
                 {activeTab === 'collections' && (
                     <div>
-                        <form onSubmit={handleCreateCollection} style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', alignItems: 'center' }}>
-                            <input
-                                name="name"
-                                defaultValue={editingCollection?.name || ''}
-                                key={editingCollection?._id || 'new'}
-                                placeholder="Nom de la collection"
-                                required
-                                style={{ padding: '0.8rem', borderRadius: '0.5rem', border: '1px solid #ddd', flexGrow: 1 }}
-                            />
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'white', padding: '0.5rem', borderRadius: '0.5rem', border: '1px solid #ddd' }}>
-                                <ImageIcon size={18} />
-                                <input name="image" type="file" accept="image/*" />
-                            </div>
-                            <button type="submit" className="btn-primary" disabled={uploading}>
-                                {uploading ? 'Envoi...' : (editingCollection ? 'Modifier' : 'Ajouter')}
-                            </button>
-                            {editingCollection && (
-                                <button type="button" onClick={() => setEditingCollection(null)} style={{ padding: '0.8rem', color: '#666' }}>
-                                    Annuler
-                                </button>
-                            )}
-                        </form>
                         <div style={{ background: 'white', borderRadius: 'var(--radius-lg)', padding: '1rem' }}>
                             {collections.map(c => (
                                 <div key={c._id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', borderBottom: '1px solid #eee' }}>
@@ -545,108 +536,6 @@ export default function AdminDashboard() {
 
                 {activeTab === 'supplements' && (
                     <div>
-                        <form onSubmit={handleCreateSupplement} style={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: '1.5rem',
-                            marginBottom: '3rem',
-                            padding: '2rem',
-                            background: 'white',
-                            borderRadius: '1.5rem',
-                            boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
-                            border: '1px solid #f0f0f0'
-                        }}>
-                            <div style={{ display: 'flex', gap: '1rem' }}>
-                                <div style={{ flex: 2 }}>
-                                    <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: 600, color: '#666', marginBottom: '0.5rem' }}>Nom du supplément</label>
-                                    <input
-                                        name="name"
-                                        defaultValue={editingSupplement?.name || ''}
-                                        key={editingSupplement?._id || 'new-name'}
-                                        placeholder="ex: Frites"
-                                        required
-                                        style={{ width: '100%', padding: '0.8rem', borderRadius: '0.8rem', border: '1px solid #ddd' }}
-                                    />
-                                </div>
-                                <div style={{ flex: 1 }}>
-                                    <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: 600, color: '#666', marginBottom: '0.5rem' }}>Prix (€)</label>
-                                    <input
-                                        name="price"
-                                        type="number"
-                                        step="0.01"
-                                        defaultValue={editingSupplement?.price || ''}
-                                        key={editingSupplement?._id || 'new-price'}
-                                        placeholder="0.00"
-                                        required
-                                        style={{ width: '100%', padding: '0.8rem', borderRadius: '0.8rem', border: '1px solid #ddd' }}
-                                    />
-                                </div>
-                            </div>
-
-                            <div>
-                                <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: 600, color: '#666', marginBottom: '1rem' }}>Bibliothèque d'icônes suggérées</label>
-                                <div style={{
-                                    display: 'grid',
-                                    gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))',
-                                    gap: '1rem',
-                                    padding: '1rem',
-                                    background: '#f9fafb',
-                                    borderRadius: '1rem',
-                                    border: '1px dashed #ccc'
-                                }}>
-                                    {[
-                                        { name: 'Frites', path: '/images/assets/supplements/frites.png' },
-                                        { name: 'Coca-Cola', path: '/images/assets/supplements/coca-cola.png' },
-                                        { name: 'Coca Zero', path: '/images/assets/supplements/coca-zero.png' },
-                                        { name: 'Poms', path: '/images/assets/supplements/poms.png' },
-                                        { name: 'Hawai', path: '/images/assets/supplements/hawai.png' },
-                                        { name: 'S. Algérienne', path: '/images/assets/supplements/sauce-algerienne.png' },
-                                        { name: 'S. Tomate', path: '/images/assets/supplements/sauce-tomate.png' },
-                                    ].map(icon => (
-                                        <div
-                                            key={icon.path}
-                                            onClick={() => setSelectedStockIcon(icon.path)}
-                                            style={{
-                                                padding: '0.5rem',
-                                                border: `2px solid ${selectedStockIcon === icon.path ? 'var(--glovo-green)' : 'transparent'}`,
-                                                borderRadius: '0.8rem',
-                                                cursor: 'pointer',
-                                                background: selectedStockIcon === icon.path ? 'white' : 'transparent',
-                                                transition: 'all 0.2s',
-                                                display: 'flex',
-                                                flexDirection: 'column',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                boxShadow: selectedStockIcon === icon.path ? '0 4px 12px rgba(0,0,0,0.1)' : 'none'
-                                            }}
-                                        >
-                                            <img src={icon.path} style={{ width: '32px', height: '32px', objectFit: 'contain' }} />
-                                            <span style={{ fontSize: '0.65rem', marginTop: '0.3rem', color: '#666', textAlign: 'center' }}>{icon.name}</span>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                                <div style={{ flex: 1 }}>
-                                    <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: 600, color: '#666', marginBottom: '0.5rem' }}>Ou uploader une image personnalisée</label>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'white', padding: '0.5rem', borderRadius: '0.8rem', border: '1px solid #ddd' }}>
-                                        <ImageIcon size={18} />
-                                        <input name="image" type="file" accept="image/*" onChange={() => setSelectedStockIcon(null)} />
-                                    </div>
-                                </div>
-                                <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.5rem' }}>
-                                    <button type="submit" className="btn-primary" disabled={uploading}>
-                                        {uploading ? 'Envoi...' : (editingSupplement ? 'Enregistrer' : 'Ajouter')}
-                                    </button>
-                                    {editingSupplement && (
-                                        <button type="button" onClick={() => { setEditingSupplement(null); setSelectedStockIcon(null); }} style={{ padding: '0.8rem', color: '#666' }}>
-                                            Annuler
-                                        </button>
-                                    )}
-                                </div>
-                            </div>
-                        </form>
                         <div style={{ background: 'white', borderRadius: 'var(--radius-lg)', padding: '1rem' }}>
                             {supplements.map(s => (
                                 <div key={s._id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', borderBottom: '1px solid #eee' }}>
@@ -667,3 +556,4 @@ export default function AdminDashboard() {
         </div>
     );
 }
+

@@ -33,12 +33,14 @@ export default function DishForm({ onSave, onCancel, collections = [], available
     };
 
     const toggleSupplement = (id) => {
-        const exists = formData.supplements.includes(id);
-        if (exists) {
-            setFormData({ ...formData, supplements: formData.supplements.filter(sId => sId !== id) });
-        } else {
-            setFormData({ ...formData, supplements: [...formData.supplements, id] });
-        }
+        setFormData(prev => {
+            const exists = prev.supplements.includes(id);
+            if (exists) {
+                return { ...prev, supplements: prev.supplements.filter(sId => sId !== id) };
+            } else {
+                return { ...prev, supplements: [...prev.supplements, id] };
+            }
+        });
     };
 
     const handleFileUpload = async (e) => {
@@ -56,7 +58,7 @@ export default function DishForm({ onSave, onCancel, collections = [], available
             });
             const json = await res.json();
             if (json.success) {
-                setFormData({ ...formData, image: json.url });
+                setFormData(prev => ({ ...prev, image: json.url }));
             }
         } catch (err) {
             alert("Erreur lors de l'upload");
@@ -114,7 +116,7 @@ export default function DishForm({ onSave, onCancel, collections = [], available
                                 type="text"
                                 required
                                 value={formData.name}
-                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                                 maxLength={60}
                                 placeholder="ex: Burger Signature"
                                 style={{ width: '100%', padding: '0.8rem', borderRadius: '0.5rem', border: '1px solid #ddd' }}
@@ -127,7 +129,7 @@ export default function DishForm({ onSave, onCancel, collections = [], available
                                 step="0.01"
                                 required
                                 value={formData.price}
-                                onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                                onChange={(e) => setFormData(prev => ({ ...prev, price: e.target.value }))}
                                 placeholder="9.99"
                                 style={{ width: '100%', padding: '0.8rem', borderRadius: '0.5rem', border: '1px solid #ddd' }}
                             />
@@ -139,7 +141,7 @@ export default function DishForm({ onSave, onCancel, collections = [], available
                         <textarea
                             required
                             value={formData.description}
-                            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                            onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                             placeholder="Décrivez les ingrédients et les saveurs..."
                             style={{ width: '100%', padding: '0.8rem', borderRadius: '0.5rem', border: '1px solid #ddd', height: '80px' }}
                         />
@@ -150,7 +152,7 @@ export default function DishForm({ onSave, onCancel, collections = [], available
                             <label style={{ display: 'block', marginBottom: '0.4rem', fontWeight: 600 }}>Collection</label>
                             <select
                                 value={formData.collection}
-                                onChange={(e) => setFormData({ ...formData, collection: e.target.value })}
+                                onChange={(e) => setFormData(prev => ({ ...prev, collection: e.target.value }))}
                                 required
                                 style={{ width: '100%', padding: '0.8rem', borderRadius: '0.5rem', border: '1px solid #ddd' }}
                             >
