@@ -118,7 +118,7 @@ export default function CartSidebar({ cart = [], isOpen, onClose, onUpdateCart }
                                             {item.selectedSize ? `Taille: ${item.selectedSize.name}` : 'Taille Standard'}
                                             {item.selectedSupplements.length > 0 && ` • +${item.selectedSupplements.map(s => s.name).join(', ')}`}
                                         </div>
-                                        <div style={{ fontWeight: 700, color: 'var(--glovo-dark)' }}>{item.finalPrice.toFixed(2)}€</div>
+                                        <div style={{ fontWeight: 700, color: 'var(--glovo-dark)' }}>{item.finalPrice.toFixed(2)}DH</div>
                                     </div>
                                     <button onClick={() => removeItem(i)} style={{ alignSelf: 'center', color: '#ef4444' }}><Trash2 size={20} /></button>
                                 </div>
@@ -170,7 +170,7 @@ export default function CartSidebar({ cart = [], isOpen, onClose, onUpdateCart }
                     <div style={{ padding: '2rem', borderTop: '1px solid #eee', background: '#fdfdfd' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
                             <span style={{ fontSize: '1.1rem', color: 'var(--glovo-gray)' }}>Total</span>
-                            <span style={{ fontSize: '1.5rem', fontWeight: 900 }}>{total.toFixed(2)}€</span>
+                            <span style={{ fontSize: '1.5rem', fontWeight: 900 }}>{total.toFixed(2)}DH</span>
                         </div>
 
                         {!isCheckout ? (

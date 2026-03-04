@@ -53,7 +53,7 @@ export default function ExpenseForm({ onSave, onCancel }) {
                     </div>
 
                     <div>
-                        <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.9rem', fontWeight: 600 }}>Montant (€)</label>
+                        <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.9rem', fontWeight: 600 }}>Montant (DH)</label>
                         <input
                             type="number"
                             step="0.01"

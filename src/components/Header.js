@@ -139,7 +139,7 @@ export default function Header({ cartCount = 0, onCartClick, searchQuery, setSea
                                                 <img src={d.image} style={{ width: '30px', height: '30px', borderRadius: '0.3rem', objectFit: 'cover' }} />
                                                 <div style={{ display: 'flex', flexDirection: 'column' }}>
                                                     <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>{d.name}</span>
-                                                    <span style={{ fontSize: '0.8rem', color: 'var(--glovo-green)', fontWeight: 700 }}>{d.price}€</span>
+                                                    <span style={{ fontSize: '0.8rem', color: 'var(--glovo-green)', fontWeight: 700 }}>{d.price}DH</span>
                                                 </div>
                                             </div>
                                         ))}

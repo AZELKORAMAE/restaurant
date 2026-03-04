@@ -103,7 +103,7 @@ export default function SupplementForm({ onSave, onCancel, initialData = null })
                             />
                         </div>
                         <div>
-                            <label style={{ display: 'block', marginBottom: '0.4rem', fontWeight: 600 }}>Prix (€)</label>
+                            <label style={{ display: 'block', marginBottom: '0.4rem', fontWeight: 600 }}>Prix (DH)</label>
                             <input
                                 type="number"
                                 step="0.01"

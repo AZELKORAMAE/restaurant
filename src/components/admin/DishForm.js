@@ -123,7 +123,7 @@ export default function DishForm({ onSave, onCancel, collections = [], available
                             />
                         </div>
                         <div>
-                            <label style={{ display: 'block', marginBottom: '0.4rem', fontWeight: 600 }}>Prix de Base (€)</label>
+                            <label style={{ display: 'block', marginBottom: '0.4rem', fontWeight: 600 }}>Prix de Base (DH)</label>
                             <input
                                 type="number"
                                 step="0.01"
@@ -221,7 +221,7 @@ export default function DishForm({ onSave, onCancel, collections = [], available
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
                             {formData.sizes.map((s, i) => (
                                 <span key={i} style={{ background: '#e2e8f0', padding: '0.3rem 0.8rem', borderRadius: '1rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                                    {s.name} (+{s.price}€) <X size={14} onClick={() => removeSize(i)} style={{ cursor: 'pointer' }} />
+                                    {s.name} (+{s.price}DH) <X size={14} onClick={() => removeSize(i)} style={{ cursor: 'pointer' }} />
                                 </span>
                             ))}
                         </div>
@@ -249,7 +249,7 @@ export default function DishForm({ onSave, onCancel, collections = [], available
                                         onChange={() => toggleSupplement(s._id)}
                                     />
                                     {s.image && <img src={s.image} style={{ width: '24px', height: '24px', objectFit: 'contain', borderRadius: '0.3rem' }} />}
-                                    <span>{s.name} (+{s.price}€)</span>
+                                    <span>{s.name} (+{s.price}DH)</span>
                                 </label>
                             ))}
                             {availableSupplements.length === 0 && (

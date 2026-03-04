@@ -28,7 +28,9 @@ export default function AdminDashboard() {
     const [editingSupplement, setEditingSupplement] = useState(null);
     const [expenses, setExpenses] = useState([]);
     const [showExpenseForm, setShowExpenseForm] = useState(false);
-    const [financeFilter, setFinanceFilter] = useState('month'); // day, week, month, year
+    const [financeFilter, setFinanceFilter] = useState('month'); // day, week, month, year, custom
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
     const [selectedStockIcon, setSelectedStockIcon] = useState(null);
 
     const handleUpdateOrderStatus = async (orderId, newStatus) => {
@@ -318,9 +320,24 @@ export default function AdminDashboard() {
         else if (financeFilter === 'week') start.setDate(now.getDate() - 7);
         else if (financeFilter === 'month') start.setMonth(now.getMonth() - 1);
         else if (financeFilter === 'year') start.setFullYear(now.getFullYear() - 1);
+        else if (financeFilter === 'custom' && startDate) {
+            start.setTime(new Date(startDate).getTime());
+        }
 
-        const filteredOrders = orders.filter(o => new Date(o.createdAt) >= start && o.status !== 'cancelled');
-        const filteredExpenses = expenses.filter(e => new Date(e.date) >= start);
+        const end = new Date();
+        if (financeFilter === 'custom' && endDate) {
+            end.setTime(new Date(endDate).getTime());
+            end.setHours(23, 59, 59, 999);
+        }
+
+        const filteredOrders = orders.filter(o => {
+            const date = new Date(o.createdAt);
+            return date >= start && date <= end && o.status !== 'cancelled';
+        });
+        const filteredExpenses = expenses.filter(e => {
+            const date = new Date(e.date);
+            return date >= start && date <= end;
+        });
 
         const revenue = filteredOrders.reduce((acc, o) => acc + o.totalAmount, 0);
         const expenseTotal = filteredExpenses.reduce((acc, e) => acc + e.amount, 0);
@@ -578,7 +595,7 @@ export default function AdminDashboard() {
                                                 </div>
                                                 <div style={{ fontSize: '0.8rem', color: '#666' }}>{order.customerInfo?.phone}</div>
                                             </td>
-                                            <td style={{ padding: '1rem', fontWeight: 700 }}>{order.totalAmount.toFixed(2)}€</td>
+                                            <td style={{ padding: '1rem', fontWeight: 700 }}>{order.totalAmount.toFixed(2)}DH</td>
                                             <td style={{ padding: '1rem' }}>
                                                 <select
                                                     value={order.status}
@@ -671,7 +688,7 @@ export default function AdminDashboard() {
                                             <div key={i} style={{ marginBottom: '1rem', paddingBottom: '1rem', borderBottom: '1px solid #eee' }}>
                                                 <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700 }}>
                                                     <span>{item.quantity}x {item.name}</span>
-                                                    <span>{item.price.toFixed(2)}€</span>
+                                                    <span>{item.price.toFixed(2)}DH</span>
                                                 </div>
                                                 <div style={{ fontSize: '0.85rem', color: '#666', marginTop: '0.2rem' }}>
                                                     {item.size ? `Taille: ${item.size.name}` : 'Taille Standard'}
@@ -683,7 +700,7 @@ export default function AdminDashboard() {
 
                                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.2rem', fontWeight: 900 }}>
                                         <span>Total</span>
-                                        <span>{selectedOrder.totalAmount.toFixed(2)}€</span>
+                                        <span>{selectedOrder.totalAmount.toFixed(2)}DH</span>
                                     </div>
                                 </div>
                             </div>
@@ -699,7 +716,7 @@ export default function AdminDashboard() {
                                 <div key={dish._id} className="card" style={{ padding: '1rem' }}>
                                     <img src={dish.image} alt={dish.name} style={{ width: '100%', height: '150px', objectFit: 'cover', borderRadius: 'var(--radius-lg)', marginBottom: '1rem' }} />
                                     <h3 style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>{dish.name}</h3>
-                                    <p style={{ color: 'var(--glovo-gray)', fontSize: '0.9rem', marginBottom: '1rem' }}>{dish.price}€</p>
+                                    <p style={{ color: 'var(--glovo-gray)', fontSize: '0.9rem', marginBottom: '1rem' }}>{dish.price}DH</p>
                                     {dish.supplements && dish.supplements.length > 0 && (
                                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1rem' }}>
                                             {dish.supplements.map(s => (
@@ -760,24 +777,45 @@ export default function AdminDashboard() {
                 {activeTab === 'finance' && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
                         {/* Filters */}
-                        <div style={{ display: 'flex', gap: '1rem', backgroundColor: 'white', padding: '1rem', borderRadius: '1rem', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
-                            {['day', 'week', 'month', 'year'].map(period => (
-                                <button
-                                    key={period}
-                                    onClick={() => setFinanceFilter(period)}
-                                    style={{
-                                        padding: '0.5rem 1.5rem',
-                                        borderRadius: '0.8rem',
-                                        textTransform: 'capitalize',
-                                        fontWeight: 600,
-                                        backgroundColor: financeFilter === period ? 'var(--glovo-yellow)' : '#f3f4f6',
-                                        color: financeFilter === period ? 'var(--glovo-dark)' : '#6b7280',
-                                        transition: 'all 0.2s'
-                                    }}
-                                >
-                                    {period === 'day' ? 'Jour' : period === 'week' ? 'Semaine' : period === 'month' ? 'Mois' : 'Année'}
-                                </button>
-                            ))}
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', backgroundColor: 'white', padding: '1rem', borderRadius: '1rem', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
+                            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                {['day', 'week', 'month', 'year', 'custom'].map(period => (
+                                    <button
+                                        key={period}
+                                        onClick={() => setFinanceFilter(period)}
+                                        style={{
+                                            padding: '0.5rem 1.2rem',
+                                            borderRadius: '0.8rem',
+                                            textTransform: 'capitalize',
+                                            fontWeight: 600,
+                                            backgroundColor: financeFilter === period ? 'var(--glovo-yellow)' : '#f3f4f6',
+                                            color: financeFilter === period ? 'var(--glovo-dark)' : '#6b7280',
+                                            transition: 'all 0.2s',
+                                            fontSize: '0.9rem'
+                                        }}
+                                    >
+                                        {period === 'day' ? 'Jour' : period === 'week' ? 'Semaine' : period === 'month' ? 'Mois' : period === 'year' ? 'Année' : 'Personnalisé'}
+                                    </button>
+                                ))}
+                            </div>
+
+                            {financeFilter === 'custom' && (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginLeft: 'auto' }}>
+                                    <input
+                                        type="date"
+                                        value={startDate}
+                                        onChange={(e) => setStartDate(e.target.value)}
+                                        style={{ padding: '0.4rem', borderRadius: '0.5rem', border: '1px solid #ddd' }}
+                                    />
+                                    <span>au</span>
+                                    <input
+                                        type="date"
+                                        value={endDate}
+                                        onChange={(e) => setEndDate(e.target.value)}
+                                        style={{ padding: '0.4rem', borderRadius: '0.5rem', border: '1px solid #ddd' }}
+                                    />
+                                </div>
+                            )}
                         </div>
 
                         {/* Stats Cards */}
@@ -787,7 +825,7 @@ export default function AdminDashboard() {
                                     <span style={{ color: '#6b7280', fontSize: '0.9rem', fontWeight: 600 }}>Revenus</span>
                                     <TrendingUp style={{ color: '#10b981' }} size={20} />
                                 </div>
-                                <div style={{ fontSize: '1.8rem', fontWeight: 900 }}>{financeData.revenue.toFixed(2)}€</div>
+                                <div style={{ fontSize: '1.8rem', fontWeight: 900 }}>{financeData.revenue.toFixed(2)}DH</div>
                                 <div style={{ fontSize: '0.8rem', color: '#6b7280', marginTop: '0.5rem' }}>{financeData.ordersCount} commandes</div>
                             </div>
 
@@ -796,7 +834,7 @@ export default function AdminDashboard() {
                                     <span style={{ color: '#6b7280', fontSize: '0.9rem', fontWeight: 600 }}>Dépenses</span>
                                     <TrendingDown style={{ color: '#ef4444' }} size={20} />
                                 </div>
-                                <div style={{ fontSize: '1.8rem', fontWeight: 900 }}>{financeData.expenseTotal.toFixed(2)}€</div>
+                                <div style={{ fontSize: '1.8rem', fontWeight: 900 }}>{financeData.expenseTotal.toFixed(2)}DH</div>
                                 <div style={{ fontSize: '0.8rem', color: '#6b7280', marginTop: '0.5rem' }}>{financeData.expenses.length} dépenses</div>
                             </div>
 
@@ -805,7 +843,7 @@ export default function AdminDashboard() {
                                     <span style={{ color: '#6b7280', fontSize: '0.9rem', fontWeight: 600 }}>C.A Net (Profit)</span>
                                     <Wallet style={{ color: 'var(--glovo-yellow)' }} size={20} />
                                 </div>
-                                <div style={{ fontSize: '1.8rem', fontWeight: 900 }}>{financeData.profit.toFixed(2)}€</div>
+                                <div style={{ fontSize: '1.8rem', fontWeight: 900 }}>{financeData.profit.toFixed(2)}DH</div>
                                 <div style={{ fontSize: '0.8rem', opacity: 0.8, marginTop: '0.5rem', color: financeData.profit >= 0 ? '#10b981' : '#ef4444' }}>
                                     {financeData.profit >= 0 ? 'En bénéfice' : 'En déficit'}
                                 </div>
@@ -831,7 +869,7 @@ export default function AdminDashboard() {
                                         <tr key={exp._id} style={{ borderBottom: '1px solid #f3f4f6' }}>
                                             <td style={{ padding: '1rem' }}>{new Date(exp.date).toLocaleDateString()}</td>
                                             <td style={{ padding: '1rem', fontWeight: 600 }}>{exp.description}</td>
-                                            <td style={{ padding: '1rem', color: '#ef4444', fontWeight: 700 }}>-{exp.amount.toFixed(2)}€</td>
+                                            <td style={{ padding: '1rem', color: '#ef4444', fontWeight: 700 }}>-{exp.amount.toFixed(2)}DH</td>
                                             <td style={{ padding: '1rem', textAlign: 'right' }}>
                                                 <button onClick={() => handleDeleteExpense(exp._id)} style={{ color: '#ef4444' }}><X size={18} /></button>
                                             </td>

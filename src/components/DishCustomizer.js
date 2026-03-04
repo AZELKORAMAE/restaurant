@@ -164,7 +164,7 @@ export default function DishCustomizer({ dish, onClose, onAddToCart }) {
                                             fontWeight: 700
                                         }}
                                     >
-                                        {size.name} (+{size.price}€)
+                                        {size.name} (+{size.price}DH)
                                     </button>
                                 ))}
                             </div>
@@ -211,7 +211,7 @@ export default function DishCustomizer({ dish, onClose, onAddToCart }) {
                                         </div>
                                         <div style={{ flexGrow: 1 }}>
                                             <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>{sup.name}</div>
-                                            <div style={{ fontSize: '0.8rem', color: 'var(--glovo-gray)' }}>+{sup.price}€</div>
+                                            <div style={{ fontSize: '0.8rem', color: 'var(--glovo-gray)' }}>+{sup.price}DH</div>
                                         </div>
                                         <input
                                             type="checkbox"
@@ -260,7 +260,7 @@ export default function DishCustomizer({ dish, onClose, onAddToCart }) {
                         <ShoppingBag size={18} />
                         <span className="hide-mobile" style={{ marginLeft: '0.5rem' }}>Ajouter</span>
                         <span style={{ marginLeft: '0.5rem', borderLeft: '1px solid rgba(0,0,0,0.1)', paddingLeft: '0.5rem' }}>
-                            {totalPrice.toFixed(2)}€
+                            {totalPrice.toFixed(2)}DH
                         </span>
                     </button>
                 </div>

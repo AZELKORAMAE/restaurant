@@ -48,7 +48,7 @@ export default function DishCard({ dish, onAdd }) {
                     zIndex: 2,
                     color: 'var(--glovo-dark)'
                 }}>
-                    {dish.price.toFixed(2)}€
+                    {dish.price.toFixed(2)} DH
                 </div>
             </div>
 
