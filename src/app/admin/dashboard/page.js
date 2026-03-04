@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { LayoutDashboard, UtensilsCrossed, ShoppingBag, Bell, Plus, LogOut, Image as ImageIcon, X, Table2 } from 'lucide-react';
+import { LayoutDashboard, UtensilsCrossed, ShoppingBag, Bell, Plus, LogOut, Image as ImageIcon, X, Table2, Printer } from 'lucide-react';
 import QRCode from 'react-qr-code';
 import { signOut } from 'next-auth/react';
 
@@ -231,6 +231,48 @@ export default function AdminDashboard() {
         }
     };
 
+    const handlePrintQR = (tableNumber) => {
+        const printWindow = window.open('', '_blank');
+        const qrSvg = document.getElementById(`qr-table-${tableNumber}`).innerHTML;
+
+        printWindow.document.write(`
+            <html>
+                <head>
+                    <title>Print QR Table ${tableNumber}</title>
+                    <style>
+                        body { 
+                            display: flex; 
+                            flex-direction: column; 
+                            align-items: center; 
+                            justify-content: center; 
+                            height: 100vh; 
+                            margin: 0; 
+                            font-family: sans-serif; 
+                        }
+                        .container { text-align: center; border: 2px solid #000; padding: 40px; border-radius: 20px; }
+                        h1 { font-size: 48px; margin-bottom: 20px; }
+                        p { font-size: 24px; color: #666; }
+                        svg { width: 300px; height: 300px; }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <h1>TABLE ${tableNumber}</h1>
+                        <div>${qrSvg}</div>
+                        <p>Scannez pour commander</p>
+                    </div>
+                    <script>
+                        window.onload = () => {
+                            window.print();
+                            window.onafterprint = () => window.close();
+                        };
+                    </script>
+                </body>
+            </html>
+        `);
+        printWindow.document.close();
+    };
+
     const logout = () => signOut({ callbackUrl: '/' });
 
     return (
@@ -436,9 +478,22 @@ export default function AdminDashboard() {
                                         <tr key={order._id} style={{ borderBottom: '1px solid #f3f4f6' }}>
                                             <td style={{ padding: '1rem' }}>{order._id.substring(order._id.length - 6)}</td>
                                             <td style={{ padding: '1rem' }}>
-                                                <div style={{ fontWeight: 600 }}>{order.customerInfo?.name || 'Client Express'}</div>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                    <div style={{ fontWeight: 600 }}>{order.customerInfo?.name || 'Client Express'}</div>
+                                                    {order.tableNumber && (
+                                                        <span style={{
+                                                            backgroundColor: 'var(--glovo-yellow)',
+                                                            color: 'var(--glovo-dark)',
+                                                            padding: '0.2rem 0.5rem',
+                                                            borderRadius: '0.5rem',
+                                                            fontSize: '0.75rem',
+                                                            fontWeight: 900
+                                                        }}>
+                                                            TABLE {order.tableNumber}
+                                                        </span>
+                                                    )}
+                                                </div>
                                                 <div style={{ fontSize: '0.8rem', color: '#666' }}>{order.customerInfo?.phone}</div>
-                                                {order.tableNumber && <div style={{ fontSize: '0.9rem', color: 'var(--glovo-green)', fontWeight: 700 }}>Table: {order.tableNumber}</div>}
                                             </td>
                                             <td style={{ padding: '1rem', fontWeight: 700 }}>{order.totalAmount.toFixed(2)}€</td>
                                             <td style={{ padding: '1rem' }}>
@@ -512,9 +567,18 @@ export default function AdminDashboard() {
                                             <p>Commande sur place</p>
                                         )}
                                         {selectedOrder.tableNumber && (
-                                            <p style={{ marginTop: '0.5rem', fontWeight: 700, color: 'var(--glovo-green)' }}>
-                                                Numéro de Table: {selectedOrder.tableNumber}
-                                            </p>
+                                            <div style={{
+                                                marginTop: '1rem',
+                                                padding: '1rem',
+                                                backgroundColor: 'var(--glovo-yellow)',
+                                                borderRadius: '1rem',
+                                                textAlign: 'center',
+                                                fontWeight: 900,
+                                                fontSize: '1.2rem',
+                                                color: 'var(--glovo-dark)'
+                                            }}>
+                                                📍 TABLE : {selectedOrder.tableNumber}
+                                            </div>
                                         )}
                                     </div>
 
@@ -637,7 +701,7 @@ export default function AdminDashboard() {
                                     <div style={{ fontSize: '2rem', fontWeight: 900, color: 'var(--glovo-green)', marginBottom: '1rem' }}>
                                         Table {table.number}
                                     </div>
-                                    <div style={{
+                                    <div id={`qr-table-${table.number}`} style={{
                                         backgroundColor: 'white',
                                         padding: '1rem',
                                         borderRadius: '1rem',
@@ -654,6 +718,12 @@ export default function AdminDashboard() {
                                         Capacité: {table.capacity} personnes
                                     </div>
                                     <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                        <button
+                                            onClick={() => handlePrintQR(table.number)}
+                                            style={{ flex: 1, padding: '0.5rem', background: 'var(--glovo-yellow)', fontWeight: 700, borderRadius: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+                                        >
+                                            <Printer size={16} /> Imprimer
+                                        </button>
                                         <button
                                             onClick={() => setEditingTable(table)}
                                             style={{ flex: 1, padding: '0.5rem', background: '#f3f4f6', borderRadius: '0.5rem' }}
