@@ -13,6 +13,7 @@ export default function Home() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [selectedDish, setSelectedDish] = useState(null);
   const [selectedCollection, setSelectedCollection] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     // Detect table from URL
@@ -46,13 +47,27 @@ export default function Home() {
     setIsCartOpen(true);
   };
 
-  const filteredDishes = selectedCollection
-    ? dishes.filter(d => d.collection?._id === selectedCollection._id)
-    : dishes;
+  const filteredDishes = dishes.filter(d => {
+    const matchesCollection = selectedCollection ? d.collection?._id === selectedCollection._id : true;
+    const matchesSearch = searchQuery
+      ? d.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      d.collection?.name.toLowerCase().includes(searchQuery.toLowerCase())
+      : true;
+    return matchesCollection && matchesSearch;
+  });
+
+  const filteredCollections = searchQuery
+    ? collections.filter(c => c.name.toLowerCase().includes(searchQuery.toLowerCase()))
+    : collections;
 
   return (
     <main style={{ backgroundColor: '#fdfdfd' }}>
-      <Header cartCount={cart.length} onCartClick={() => setIsCartOpen(true)} />
+      <Header
+        cartCount={cart.length}
+        onCartClick={() => setIsCartOpen(true)}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+      />
 
       {/* Hero Section */}
       {!selectedCollection ? (
@@ -68,12 +83,13 @@ export default function Home() {
         }}>
           <div className="container" style={{ position: 'relative', zIndex: 1 }}>
             <h1 style={{
-              fontSize: '4.5rem',
+              fontSize: 'clamp(2.5rem, 8vw, 4.5rem)',
               fontWeight: 900,
               marginBottom: '1.5rem',
               letterSpacing: '-2px',
               fontFamily: 'var(--font-serif)',
-              animation: 'fadeInUp 1s ease-out'
+              animation: 'fadeInUp 1s ease-out',
+              padding: '0 1rem'
             }}>
               L'Art de Vivre <br /> Gourmand 🍷
             </h1>
@@ -129,13 +145,13 @@ export default function Home() {
                 gap: '1.5rem',
                 marginBottom: '5rem'
               }}>
-                {collections.map(c => (
+                {filteredCollections.map(c => (
                   <div
                     key={c._id}
                     onClick={() => setSelectedCollection(c)}
                     style={{
                       position: 'relative',
-                      height: '240px',
+                      height: 'clamp(180px, 30vw, 240px)',
                       borderRadius: '2rem',
                       overflow: 'hidden',
                       cursor: 'pointer',
