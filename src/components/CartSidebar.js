@@ -10,6 +10,7 @@ export default function CartSidebar({ cart = [], isOpen, onClose, onUpdateCart }
         address: '',
         phone: ''
     });
+    const tableNumber = typeof window !== 'undefined' ? localStorage.getItem('tableNumber') : null;
 
     const total = cart.reduce((sum, item) => sum + item.finalPrice, 0);
 
@@ -20,8 +21,13 @@ export default function CartSidebar({ cart = [], isOpen, onClose, onUpdateCart }
     };
 
     const handleOrder = async () => {
-        if (!customerInfo.name || !customerInfo.address || !customerInfo.phone) {
+        if (!tableNumber && (!customerInfo.name || !customerInfo.address || !customerInfo.phone)) {
             alert("Veuillez remplir toutes vos informations.");
+            return;
+        }
+
+        if (tableNumber && !customerInfo.name && !customerInfo.phone) {
+            alert("Veuillez entrer votre nom et téléphone pour que nous puissions vous identifier.");
             return;
         }
 
@@ -35,7 +41,8 @@ export default function CartSidebar({ cart = [], isOpen, onClose, onUpdateCart }
                 price: item.finalPrice
             })),
             totalAmount: total,
-            customerInfo
+            customerInfo: tableNumber ? { ...customerInfo, address: `TABLE ${tableNumber}` } : customerInfo,
+            tableNumber: tableNumber
         };
 
         try {
@@ -119,9 +126,24 @@ export default function CartSidebar({ cart = [], isOpen, onClose, onUpdateCart }
                         </div>
                     ) : (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                            <h3 style={{ fontSize: '1.2rem', fontWeight: 800, marginBottom: '0.5rem' }}>Informations de Livraison</h3>
+                            <h3 style={{ fontSize: '1.2rem', fontWeight: 800, marginBottom: '0.5rem' }}>
+                                {tableNumber ? `Commande pour la Table ${tableNumber}` : 'Informations de Livraison'}
+                            </h3>
+                            {tableNumber && (
+                                <div style={{
+                                    padding: '1rem',
+                                    backgroundColor: '#dcfce7',
+                                    color: 'var(--glovo-green)',
+                                    borderRadius: '1rem',
+                                    fontWeight: 700,
+                                    fontSize: '0.9rem',
+                                    textAlign: 'center'
+                                }}>
+                                    ✨ Commande sur place validée
+                                </div>
+                            )}
                             <input
-                                placeholder="Votre Nom Complet"
+                                placeholder="Votre Nom"
                                 value={customerInfo.name}
                                 onChange={e => setCustomerInfo({ ...customerInfo, name: e.target.value })}
                                 style={{ width: '100%', padding: '1rem', borderRadius: '1rem', border: '1px solid #ddd' }}
@@ -132,12 +154,14 @@ export default function CartSidebar({ cart = [], isOpen, onClose, onUpdateCart }
                                 onChange={e => setCustomerInfo({ ...customerInfo, phone: e.target.value })}
                                 style={{ width: '100%', padding: '1rem', borderRadius: '1rem', border: '1px solid #ddd' }}
                             />
-                            <textarea
-                                placeholder="Adresse de Livraison"
-                                value={customerInfo.address}
-                                onChange={e => setCustomerInfo({ ...customerInfo, address: e.target.value })}
-                                style={{ width: '100%', padding: '1rem', borderRadius: '1rem', border: '1px solid #ddd', height: '100px' }}
-                            />
+                            {!tableNumber && (
+                                <textarea
+                                    placeholder="Adresse de Livraison"
+                                    value={customerInfo.address}
+                                    onChange={e => setCustomerInfo({ ...customerInfo, address: e.target.value })}
+                                    style={{ width: '100%', padding: '1rem', borderRadius: '1rem', border: '1px solid #ddd', height: '100px' }}
+                                />
+                            )}
                         </div>
                     )}
                 </div>

@@ -15,6 +15,14 @@ export default function Home() {
   const [selectedCollection, setSelectedCollection] = useState(null);
 
   useEffect(() => {
+    // Detect table from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const tableNum = urlParams.get('table');
+    if (tableNum) {
+      localStorage.setItem('tableNumber', tableNum);
+      console.log("Table detected and saved:", tableNum);
+    }
+
     async function fetchData() {
       try {
         const [dishesRes, collsRes] = await Promise.all([

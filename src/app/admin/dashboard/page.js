@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { LayoutDashboard, UtensilsCrossed, ShoppingBag, Bell, Plus, LogOut, Image as ImageIcon, X } from 'lucide-react';
+import { LayoutDashboard, UtensilsCrossed, ShoppingBag, Bell, Plus, LogOut, Image as ImageIcon, X, Table2 } from 'lucide-react';
+import QRCode from 'react-qr-code';
 import { signOut } from 'next-auth/react';
 
 import DishForm from '@/components/admin/DishForm';
@@ -13,6 +14,9 @@ export default function AdminDashboard() {
     const [dishes, setDishes] = useState([]);
     const [collections, setCollections] = useState([]);
     const [supplements, setSupplements] = useState([]);
+    const [tables, setTables] = useState([]);
+    const [showTableForm, setShowTableForm] = useState(false);
+    const [editingTable, setEditingTable] = useState(null);
     const [selectedOrder, setSelectedOrder] = useState(null);
     const [uploading, setUploading] = useState(false);
     const [showDishForm, setShowDishForm] = useState(false);
@@ -47,13 +51,15 @@ export default function AdminDashboard() {
             fetch('/api/orders').then(res => res.json()),
             fetch('/api/dishes').then(res => res.json()),
             fetch('/api/collections').then(res => res.json()),
-            fetch('/api/supplements').then(res => res.json())
+            fetch('/api/supplements').then(res => res.json()),
+            fetch('/api/tables').then(res => res.json())
         ]);
 
         setOrders(ordersRes.data || []);
         setDishes(dishesRes.data || []);
         setCollections(collsRes.data || []);
         setSupplements(suppsRes.data || []);
+        setTables(tablesRes.data || []);
     };
 
     useEffect(() => {
@@ -190,6 +196,41 @@ export default function AdminDashboard() {
         }
     };
 
+    const handleCreateTable = async (tableData) => {
+        try {
+            const url = editingTable ? `/api/tables/${editingTable._id}` : '/api/tables';
+            const method = editingTable ? 'PATCH' : 'POST';
+
+            const res = await fetch(url, {
+                method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(tableData),
+            });
+            const json = await res.json();
+            if (json.success) {
+                setShowTableForm(false);
+                setEditingTable(null);
+                fetchData();
+                alert(editingTable ? 'Table mise à jour !' : 'Table ajoutée !');
+            } else {
+                alert(`Erreur: ${json.error || 'Erreur lors de la sauvegarde de la table'}`);
+            }
+        } catch (err) {
+            console.error("Error creating/updating table:", err);
+        }
+    };
+
+    const handleDeleteTable = async (id) => {
+        if (!confirm('Supprimer cette table ?')) return;
+        try {
+            const res = await fetch(`/api/tables/${id}`, { method: 'DELETE' });
+            const json = await res.json();
+            if (json.success) fetchData();
+        } catch (err) {
+            console.error("Delete error", err);
+        }
+    };
+
     const logout = () => signOut({ callbackUrl: '/' });
 
     return (
@@ -309,6 +350,23 @@ export default function AdminDashboard() {
                         <Plus size={20} />
                         Suppléments
                     </button>
+
+                    <button
+                        onClick={() => setActiveTab('tables')}
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '1rem',
+                            padding: '1rem',
+                            borderRadius: '0.5rem',
+                            color: activeTab === 'tables' ? 'var(--glovo-dark)' : 'white',
+                            backgroundColor: activeTab === 'tables' ? 'var(--glovo-yellow)' : 'transparent',
+                            fontWeight: 600
+                        }}
+                    >
+                        <Table2 size={20} />
+                        Tables & QR
+                    </button>
                 </nav>
 
                 <button
@@ -335,6 +393,7 @@ export default function AdminDashboard() {
                         {activeTab === 'dishes' && 'Gestion du Menu'}
                         {activeTab === 'collections' && 'Gestion des Collections'}
                         {activeTab === 'supplements' && 'Gestion des Suppléments'}
+                        {activeTab === 'tables' && 'Gestion des Tables'}
                     </h1>
 
                     {activeTab === 'dishes' && (
@@ -352,6 +411,11 @@ export default function AdminDashboard() {
                             <Plus size={20} /> Nouveau Supplément
                         </button>
                     )}
+                    {activeTab === 'tables' && (
+                        <button className="btn-primary" onClick={() => setShowTableForm(true)}>
+                            <Plus size={20} /> Nouvelle Table
+                        </button>
+                    )}
                 </header>
 
                 {activeTab === 'orders' && (
@@ -361,7 +425,7 @@ export default function AdminDashboard() {
                                 <thead style={{ backgroundColor: '#f3f4f6', borderBottom: '1px solid #e5e7eb' }}>
                                     <tr>
                                         <th style={{ padding: '1rem', textAlign: 'left' }}>Id</th>
-                                        <th style={{ padding: '1rem', textAlign: 'left' }}>Client</th>
+                                        <th style={{ padding: '1rem', textAlign: 'left' }}>Client / Table</th>
                                         <th style={{ padding: '1rem', textAlign: 'left' }}>Total</th>
                                         <th style={{ padding: '1rem', textAlign: 'left' }}>Statut</th>
                                         <th style={{ padding: '1rem', textAlign: 'left' }}>Actions</th>
@@ -372,8 +436,9 @@ export default function AdminDashboard() {
                                         <tr key={order._id} style={{ borderBottom: '1px solid #f3f4f6' }}>
                                             <td style={{ padding: '1rem' }}>{order._id.substring(order._id.length - 6)}</td>
                                             <td style={{ padding: '1rem' }}>
-                                                <div style={{ fontWeight: 600 }}>{order.customerInfo?.name}</div>
+                                                <div style={{ fontWeight: 600 }}>{order.customerInfo?.name || 'Client Express'}</div>
                                                 <div style={{ fontSize: '0.8rem', color: '#666' }}>{order.customerInfo?.phone}</div>
+                                                {order.tableNumber && <div style={{ fontSize: '0.9rem', color: 'var(--glovo-green)', fontWeight: 700 }}>Table: {order.tableNumber}</div>}
                                             </td>
                                             <td style={{ padding: '1rem', fontWeight: 700 }}>{order.totalAmount.toFixed(2)}€</td>
                                             <td style={{ padding: '1rem' }}>
@@ -437,9 +502,20 @@ export default function AdminDashboard() {
 
                                     <div style={{ marginBottom: '2rem' }}>
                                         <h3 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '0.5rem' }}>Client</h3>
-                                        <p>{selectedOrder.customerInfo?.name}</p>
-                                        <p>{selectedOrder.customerInfo?.phone}</p>
-                                        <p>{selectedOrder.customerInfo?.address}</p>
+                                        {selectedOrder.customerInfo?.name ? (
+                                            <>
+                                                <p>{selectedOrder.customerInfo?.name}</p>
+                                                <p>{selectedOrder.customerInfo?.phone}</p>
+                                                <p>{selectedOrder.customerInfo?.address}</p>
+                                            </>
+                                        ) : (
+                                            <p>Commande sur place</p>
+                                        )}
+                                        {selectedOrder.tableNumber && (
+                                            <p style={{ marginTop: '0.5rem', fontWeight: 700, color: 'var(--glovo-green)' }}>
+                                                Numéro de Table: {selectedOrder.tableNumber}
+                                            </p>
+                                        )}
                                     </div>
 
                                     <div style={{ marginBottom: '2rem' }}>
@@ -550,6 +626,108 @@ export default function AdminDashboard() {
                                 </div>
                             ))}
                         </div>
+                    </div>
+                )}
+
+                {activeTab === 'tables' && (
+                    <div>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.5rem' }}>
+                            {tables.map(table => (
+                                <div key={table._id} className="card" style={{ padding: '1.5rem', textAlign: 'center' }}>
+                                    <div style={{ fontSize: '2rem', fontWeight: 900, color: 'var(--glovo-green)', marginBottom: '1rem' }}>
+                                        Table {table.number}
+                                    </div>
+                                    <div style={{
+                                        backgroundColor: 'white',
+                                        padding: '1rem',
+                                        borderRadius: '1rem',
+                                        display: 'inline-block',
+                                        marginBottom: '1rem',
+                                        boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                                    }}>
+                                        <QRCode
+                                            value={`${typeof window !== 'undefined' ? window.location.origin : ''}/?table=${table.number}`}
+                                            size={150}
+                                        />
+                                    </div>
+                                    <div style={{ color: 'var(--glovo-gray)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
+                                        Capacité: {table.capacity} personnes
+                                    </div>
+                                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                        <button
+                                            onClick={() => setEditingTable(table)}
+                                            style={{ flex: 1, padding: '0.5rem', background: '#f3f4f6', borderRadius: '0.5rem' }}
+                                        >
+                                            Modifier
+                                        </button>
+                                        <button
+                                            onClick={() => handleDeleteTable(table._id)}
+                                            style={{ flex: 1, padding: '0.5rem', background: '#fee2e2', color: '#dc2626', borderRadius: '0.5rem' }}
+                                        >
+                                            Supprimer
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {(showTableForm || editingTable) && (
+                            <div style={{
+                                position: 'fixed',
+                                top: 0, left: 0, right: 0, bottom: 0,
+                                backgroundColor: 'rgba(0,0,0,0.5)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                zIndex: 1200
+                            }}>
+                                <div style={{ backgroundColor: 'white', borderRadius: '1.5rem', padding: '2rem', width: '90%', maxWidth: '400px' }}>
+                                    <h2 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '1.5rem' }}>
+                                        {editingTable ? 'Modifier la Table' : 'Nouvelle Table'}
+                                    </h2>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                        <div>
+                                            <label style={{ display: 'block', fontSize: '0.9rem', marginBottom: '0.4rem' }}>Numéro de table</label>
+                                            <input
+                                                type="text"
+                                                defaultValue={editingTable?.number || ''}
+                                                id="table-number"
+                                                className="input"
+                                                placeholder="Ex: 5"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label style={{ display: 'block', fontSize: '0.9rem', marginBottom: '0.4rem' }}>Capacité</label>
+                                            <input
+                                                type="number"
+                                                defaultValue={editingTable?.capacity || 4}
+                                                id="table-capacity"
+                                                className="input"
+                                            />
+                                        </div>
+                                        <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+                                            <button
+                                                className="btn-primary"
+                                                style={{ flex: 1 }}
+                                                onClick={() => {
+                                                    const number = document.getElementById('table-number').value;
+                                                    const capacity = document.getElementById('table-capacity').value;
+                                                    handleCreateTable({ number, capacity });
+                                                }}
+                                            >
+                                                Sauvegarder
+                                            </button>
+                                            <button
+                                                style={{ flex: 1, padding: '1rem', borderRadius: 'var(--radius-xl)', border: '1px solid #ddd' }}
+                                                onClick={() => { setShowTableForm(false); setEditingTable(null); }}
+                                            >
+                                                Annuler
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
             </main>

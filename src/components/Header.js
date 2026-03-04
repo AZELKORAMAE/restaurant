@@ -27,6 +27,18 @@ export default function Header({ cartCount = 0, onCartClick }) {
                     gap: '0.2rem'
                 }}>
                     <span style={{ color: 'var(--glovo-yellow)' }}>GLOVO</span>MANGER
+                    {typeof window !== 'undefined' && localStorage.getItem('tableNumber') && (
+                        <span style={{
+                            marginLeft: '1rem',
+                            fontSize: '0.9rem',
+                            backgroundColor: 'var(--glovo-yellow)',
+                            color: 'var(--glovo-dark)',
+                            padding: '0.2rem 0.6rem',
+                            borderRadius: '1rem'
+                        }}>
+                            Table {localStorage.getItem('tableNumber')}
+                        </span>
+                    )}
                 </Link>
 
                 <div style={{

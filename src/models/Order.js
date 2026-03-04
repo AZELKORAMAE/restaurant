@@ -42,6 +42,10 @@ const OrderSchema = new mongoose.Schema({
         phone: String,
         email: String,
     },
+    tableNumber: {
+        type: String,
+        default: null,
+    },
 }, { timestamps: true });
 
 export default mongoose.models.Order || mongoose.model('Order', OrderSchema);
