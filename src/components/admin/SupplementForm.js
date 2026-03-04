@@ -6,11 +6,13 @@ export default function SupplementForm({ onSave, onCancel, initialData = null })
     const [formData, setFormData] = useState(initialData ? {
         name: initialData.name,
         price: initialData.price,
-        image: initialData.image
+        image: initialData.image,
+        isActive: initialData.isActive !== undefined ? initialData.isActive : true
     } : {
         name: '',
         price: '',
-        image: ''
+        image: '',
+        isActive: true
     });
 
     const [selectedStockIcon, setSelectedStockIcon] = useState(null);
@@ -184,6 +186,17 @@ export default function SupplementForm({ onSave, onCancel, initialData = null })
                             {uploading ? 'Chargement...' : 'Choisir un fichier'}
                             <input type="file" hidden accept="image/*" onChange={handleFileUpload} disabled={uploading} />
                         </label>
+                    </div>
+
+                    <div style={{ marginBottom: '2rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <input
+                            type="checkbox"
+                            id="supplementIsActive"
+                            checked={formData.isActive}
+                            onChange={(e) => setFormData(prev => ({ ...prev, isActive: e.target.checked }))}
+                            style={{ width: '1.2rem', height: '1.2rem', cursor: 'pointer' }}
+                        />
+                        <label htmlFor="supplementIsActive" style={{ fontWeight: 600, cursor: 'pointer' }}>Supplément Actif</label>
                     </div>
 
                     <div style={{ display: 'flex', gap: '1rem' }}>

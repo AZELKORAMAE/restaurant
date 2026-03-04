@@ -158,6 +158,17 @@ export default function CollectionForm({ onSave, onCancel, initialData = null })
                         )}
                     </div>
 
+                    <div style={{ marginBottom: '2rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <input
+                            type="checkbox"
+                            id="collectionIsActive"
+                            checked={formData.isActive}
+                            onChange={(e) => setFormData(prev => ({ ...prev, isActive: e.target.checked }))}
+                            style={{ width: '1.2rem', height: '1.2rem', cursor: 'pointer' }}
+                        />
+                        <label htmlFor="collectionIsActive" style={{ fontWeight: 600, cursor: 'pointer' }}>Collection Active</label>
+                    </div>
+
                     <div style={{ display: 'flex', gap: '1rem' }}>
                         <button type="submit" className="btn-primary" style={{ flex: 1, justifyContent: 'center', padding: '1.2rem' }} disabled={uploading}>
                             <Save size={20} /> {initialData ? 'Mettre à jour' : 'Créer la collection'}

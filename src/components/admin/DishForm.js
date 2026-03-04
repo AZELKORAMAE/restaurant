@@ -14,7 +14,8 @@ export default function DishForm({ onSave, onCancel, collections = [], available
         image: '',
         collection: '',
         sizes: [],
-        supplements: [] // Array of IDs
+        supplements: [], // Array of IDs
+        isActive: initialData?.isActive !== undefined ? initialData.isActive : true
     });
 
     const [newSize, setNewSize] = useState({ name: '', price: '' });
@@ -258,6 +259,17 @@ export default function DishForm({ onSave, onCancel, collections = [], available
                                 </p>
                             )}
                         </div>
+                    </div>
+
+                    <div style={{ marginBottom: '2rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <input
+                            type="checkbox"
+                            id="isActive"
+                            checked={formData.isActive}
+                            onChange={(e) => setFormData(prev => ({ ...prev, isActive: e.target.checked }))}
+                            style={{ width: '1.2rem', height: '1.2rem', cursor: 'pointer' }}
+                        />
+                        <label htmlFor="isActive" style={{ fontWeight: 600, cursor: 'pointer' }}>Plat Actif (visible par les clients)</label>
                     </div>
 
                     <div style={{ display: 'flex', gap: '1rem' }}>

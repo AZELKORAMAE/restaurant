@@ -3,16 +3,20 @@ import React from 'react';
 import { Plus } from 'lucide-react';
 
 export default function DishCard({ dish, onAdd }) {
+    const isInactive = dish.isActive === false;
+
     return (
         <div
             className="card"
-            onClick={() => onAdd(dish)}
+            onClick={() => !isInactive && onAdd(dish)}
             style={{
                 display: 'flex',
                 flexDirection: 'column',
                 height: '100%',
                 backgroundColor: 'var(--glovo-white)',
-                cursor: 'pointer'
+                cursor: isInactive ? 'not-allowed' : 'pointer',
+                opacity: isInactive ? 0.6 : 1,
+                position: 'relative'
             }}
         >
             <div style={{
@@ -31,10 +35,37 @@ export default function DishCard({ dish, onAdd }) {
                         width: '100%',
                         height: '100%',
                         objectFit: 'cover',
-                        transition: 'transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)'
+                        transition: 'transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
+                        filter: isInactive ? 'grayscale(100%)' : 'none'
                     }}
                     className="dish-image"
                 />
+                {isInactive && (
+                    <div style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        backgroundColor: 'rgba(0,0,0,0.4)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 3
+                    }}>
+                        <span style={{
+                            backgroundColor: 'white',
+                            color: 'black',
+                            padding: '0.4rem 0.8rem',
+                            borderRadius: '2rem',
+                            fontWeight: 800,
+                            fontSize: '0.8rem',
+                            boxShadow: '0 4px 15px rgba(0,0,0,0.2)'
+                        }}>
+                            INDISPONIBLE
+                        </span>
+                    </div>
+                )}
                 <div style={{
                     position: 'absolute',
                     top: '1rem',
@@ -95,7 +126,10 @@ export default function DishCard({ dish, onAdd }) {
                         </span>
                     </div>
                     <button
-                        onClick={() => onAdd(dish)}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            if (!isInactive) onAdd(dish);
+                        }}
                         className="btn-primary"
                         style={{
                             padding: '0',
@@ -103,8 +137,11 @@ export default function DishCard({ dish, onAdd }) {
                             width: '42px',
                             height: '42px',
                             justifyContent: 'center',
-                            minWidth: '42px'
+                            minWidth: '42px',
+                            backgroundColor: isInactive ? '#ccc' : undefined,
+                            cursor: isInactive ? 'not-allowed' : 'pointer'
                         }}
+                        disabled={isInactive}
                     >
                         <Plus size={22} />
                     </button>

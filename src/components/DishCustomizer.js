@@ -176,7 +176,7 @@ export default function DishCustomizer({ dish, onClose, onAddToCart }) {
                         <div style={{ marginBottom: '2rem' }}>
                             <h3 style={{ fontSize: '1.1rem', fontWeight: 800, marginBottom: '1rem' }}>Ajouter des suppléments</h3>
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1rem' }}>
-                                {dish.supplements.map(sup => (
+                                {dish.supplements?.filter(s => s.isActive !== false).map(sup => (
                                     <div
                                         key={sup._id}
                                         onClick={() => toggleSupplement(sup._id)}
