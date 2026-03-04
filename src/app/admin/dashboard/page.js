@@ -1,12 +1,13 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { LayoutDashboard, UtensilsCrossed, ShoppingBag, Bell, Plus, LogOut, Image as ImageIcon, X, Table2, Printer } from 'lucide-react';
+import { LayoutDashboard, UtensilsCrossed, ShoppingBag, Bell, Plus, LogOut, Image as ImageIcon, X, Table2, Printer, Wallet, TrendingUp, TrendingDown, Calendar } from 'lucide-react';
 import QRCode from 'react-qr-code';
 import { signOut } from 'next-auth/react';
 
 import DishForm from '@/components/admin/DishForm';
 import CollectionForm from '@/components/admin/CollectionForm';
 import SupplementForm from '@/components/admin/SupplementForm';
+import ExpenseForm from '@/components/admin/ExpenseForm';
 
 export default function AdminDashboard() {
     const [activeTab, setActiveTab] = useState('orders');
@@ -25,6 +26,9 @@ export default function AdminDashboard() {
     const [editingDish, setEditingDish] = useState(null);
     const [editingCollection, setEditingCollection] = useState(null);
     const [editingSupplement, setEditingSupplement] = useState(null);
+    const [expenses, setExpenses] = useState([]);
+    const [showExpenseForm, setShowExpenseForm] = useState(false);
+    const [financeFilter, setFinanceFilter] = useState('month'); // day, week, month, year
     const [selectedStockIcon, setSelectedStockIcon] = useState(null);
 
     const handleUpdateOrderStatus = async (orderId, newStatus) => {
@@ -47,12 +51,13 @@ export default function AdminDashboard() {
     };
 
     const fetchData = async () => {
-        const [ordersRes, dishesRes, collsRes, suppsRes, tablesRes] = await Promise.all([
+        const [ordersRes, dishesRes, collsRes, suppsRes, tablesRes, expensesRes] = await Promise.all([
             fetch('/api/orders').then(res => res.json()),
             fetch('/api/dishes').then(res => res.json()),
             fetch('/api/collections').then(res => res.json()),
             fetch('/api/supplements').then(res => res.json()),
-            fetch('/api/tables').then(res => res.json())
+            fetch('/api/tables').then(res => res.json()),
+            fetch('/api/expenses').then(res => res.json())
         ]);
 
         setOrders(ordersRes.data || []);
@@ -60,6 +65,7 @@ export default function AdminDashboard() {
         setCollections(collsRes.data || []);
         setSupplements(suppsRes.data || []);
         setTables(tablesRes.data || []);
+        setExpenses(expensesRes.data || []);
     };
 
     useEffect(() => {
@@ -273,7 +279,56 @@ export default function AdminDashboard() {
         printWindow.document.close();
     };
 
+    const handleCreateExpense = async (expenseData) => {
+        try {
+            const res = await fetch('/api/expenses', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(expenseData),
+            });
+            const json = await res.json();
+            if (json.success) {
+                setShowExpenseForm(false);
+                fetchData();
+            } else {
+                alert(`Erreur: ${json.error}`);
+            }
+        } catch (err) {
+            console.error("Error creating expense:", err);
+        }
+    };
+
+    const handleDeleteExpense = async (id) => {
+        if (!confirm('Supprimer cette dépense ?')) return;
+        try {
+            await fetch(`/api/expenses/${id}`, { method: 'DELETE' });
+            fetchData();
+        } catch (err) {
+            console.error("Delete error", err);
+        }
+    };
+
     const logout = () => signOut({ callbackUrl: '/' });
+
+    const getFinanceData = () => {
+        const now = new Date();
+        const start = new Date();
+
+        if (financeFilter === 'day') start.setHours(0, 0, 0, 0);
+        else if (financeFilter === 'week') start.setDate(now.getDate() - 7);
+        else if (financeFilter === 'month') start.setMonth(now.getMonth() - 1);
+        else if (financeFilter === 'year') start.setFullYear(now.getFullYear() - 1);
+
+        const filteredOrders = orders.filter(o => new Date(o.createdAt) >= start && o.status !== 'cancelled');
+        const filteredExpenses = expenses.filter(e => new Date(e.date) >= start);
+
+        const revenue = filteredOrders.reduce((acc, o) => acc + o.totalAmount, 0);
+        const expenseTotal = filteredExpenses.reduce((acc, e) => acc + e.amount, 0);
+
+        return { revenue, expenseTotal, profit: revenue - expenseTotal, ordersCount: filteredOrders.length, expenses: filteredExpenses };
+    };
+
+    const financeData = getFinanceData();
 
     return (
         <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#f9fafb' }}>
@@ -298,6 +353,12 @@ export default function AdminDashboard() {
                     onSave={handleCreateSupplement}
                     onCancel={() => { setShowSupplementForm(false); setEditingSupplement(null); }}
                     initialData={editingSupplement}
+                />
+            )}
+            {showExpenseForm && (
+                <ExpenseForm
+                    onSave={handleCreateExpense}
+                    onCancel={() => setShowExpenseForm(false)}
                 />
             )}
             {/* Sidebar */}
@@ -409,6 +470,23 @@ export default function AdminDashboard() {
                         <Table2 size={20} />
                         Tables & QR
                     </button>
+
+                    <button
+                        onClick={() => setActiveTab('finance')}
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '1rem',
+                            padding: '1rem',
+                            borderRadius: '0.5rem',
+                            color: activeTab === 'finance' ? 'var(--glovo-dark)' : 'white',
+                            backgroundColor: activeTab === 'finance' ? 'var(--glovo-yellow)' : 'transparent',
+                            fontWeight: 600
+                        }}
+                    >
+                        <Wallet size={20} />
+                        Finance
+                    </button>
                 </nav>
 
                 <button
@@ -456,6 +534,11 @@ export default function AdminDashboard() {
                     {activeTab === 'tables' && (
                         <button className="btn-primary" onClick={() => setShowTableForm(true)}>
                             <Plus size={20} /> Nouvelle Table
+                        </button>
+                    )}
+                    {activeTab === 'finance' && (
+                        <button className="btn-primary" onClick={() => setShowExpenseForm(true)}>
+                            <Plus size={20} /> Ajouter une Dépense
                         </button>
                     )}
                 </header>
@@ -674,21 +757,90 @@ export default function AdminDashboard() {
                     </div>
                 )}
 
-                {activeTab === 'supplements' && (
-                    <div>
-                        <div style={{ background: 'white', borderRadius: 'var(--radius-lg)', padding: '1rem' }}>
-                            {supplements.map(s => (
-                                <div key={s._id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', borderBottom: '1px solid #eee' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                                        {s.image && <img src={s.image} style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '0.4rem' }} />}
-                                        <span style={{ fontWeight: 600 }}>{s.name} (+{s.price}€)</span>
-                                    </div>
-                                    <div style={{ display: 'flex', gap: '1rem' }}>
-                                        <button onClick={() => setEditingSupplement(s)} style={{ color: 'var(--glovo-green)' }}>Modifier</button>
-                                        <button onClick={() => handleDeleteSupplement(s._id)} style={{ color: '#dc2626' }}>Supprimer</button>
-                                    </div>
-                                </div>
+                {activeTab === 'finance' && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                        {/* Filters */}
+                        <div style={{ display: 'flex', gap: '1rem', backgroundColor: 'white', padding: '1rem', borderRadius: '1rem', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
+                            {['day', 'week', 'month', 'year'].map(period => (
+                                <button
+                                    key={period}
+                                    onClick={() => setFinanceFilter(period)}
+                                    style={{
+                                        padding: '0.5rem 1.5rem',
+                                        borderRadius: '0.8rem',
+                                        textTransform: 'capitalize',
+                                        fontWeight: 600,
+                                        backgroundColor: financeFilter === period ? 'var(--glovo-yellow)' : '#f3f4f6',
+                                        color: financeFilter === period ? 'var(--glovo-dark)' : '#6b7280',
+                                        transition: 'all 0.2s'
+                                    }}
+                                >
+                                    {period === 'day' ? 'Jour' : period === 'week' ? 'Semaine' : period === 'month' ? 'Mois' : 'Année'}
+                                </button>
                             ))}
+                        </div>
+
+                        {/* Stats Cards */}
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem' }}>
+                            <div className="card" style={{ padding: '1.5rem', borderLeft: '4px solid #10b981' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                                    <span style={{ color: '#6b7280', fontSize: '0.9rem', fontWeight: 600 }}>Revenus</span>
+                                    <TrendingUp style={{ color: '#10b981' }} size={20} />
+                                </div>
+                                <div style={{ fontSize: '1.8rem', fontWeight: 900 }}>{financeData.revenue.toFixed(2)}€</div>
+                                <div style={{ fontSize: '0.8rem', color: '#6b7280', marginTop: '0.5rem' }}>{financeData.ordersCount} commandes</div>
+                            </div>
+
+                            <div className="card" style={{ padding: '1.5rem', borderLeft: '4px solid #ef4444' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                                    <span style={{ color: '#6b7280', fontSize: '0.9rem', fontWeight: 600 }}>Dépenses</span>
+                                    <TrendingDown style={{ color: '#ef4444' }} size={20} />
+                                </div>
+                                <div style={{ fontSize: '1.8rem', fontWeight: 900 }}>{financeData.expenseTotal.toFixed(2)}€</div>
+                                <div style={{ fontSize: '0.8rem', color: '#6b7280', marginTop: '0.5rem' }}>{financeData.expenses.length} dépenses</div>
+                            </div>
+
+                            <div className="card" style={{ padding: '1.5rem', borderLeft: '4px solid var(--glovo-yellow)' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                                    <span style={{ color: '#6b7280', fontSize: '0.9rem', fontWeight: 600 }}>C.A Net (Profit)</span>
+                                    <Wallet style={{ color: 'var(--glovo-yellow)' }} size={20} />
+                                </div>
+                                <div style={{ fontSize: '1.8rem', fontWeight: 900 }}>{financeData.profit.toFixed(2)}€</div>
+                                <div style={{ fontSize: '0.8rem', opacity: 0.8, marginTop: '0.5rem', color: financeData.profit >= 0 ? '#10b981' : '#ef4444' }}>
+                                    {financeData.profit >= 0 ? 'En bénéfice' : 'En déficit'}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Recent Expenses Table */}
+                        <div className="card" style={{ padding: '0' }}>
+                            <div style={{ padding: '1.5rem', borderBottom: '1px solid #f3f4f6', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <h3 style={{ fontWeight: 800 }}>Détail des Dépenses</h3>
+                            </div>
+                            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                                <thead style={{ backgroundColor: '#f3f4f6' }}>
+                                    <tr>
+                                        <th style={{ padding: '1rem', textAlign: 'left' }}>Date</th>
+                                        <th style={{ padding: '1rem', textAlign: 'left' }}>Description</th>
+                                        <th style={{ padding: '1rem', textAlign: 'left' }}>Montant</th>
+                                        <th style={{ padding: '1rem', textAlign: 'right' }}>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {financeData.expenses.length > 0 ? financeData.expenses.map(exp => (
+                                        <tr key={exp._id} style={{ borderBottom: '1px solid #f3f4f6' }}>
+                                            <td style={{ padding: '1rem' }}>{new Date(exp.date).toLocaleDateString()}</td>
+                                            <td style={{ padding: '1rem', fontWeight: 600 }}>{exp.description}</td>
+                                            <td style={{ padding: '1rem', color: '#ef4444', fontWeight: 700 }}>-{exp.amount.toFixed(2)}€</td>
+                                            <td style={{ padding: '1rem', textAlign: 'right' }}>
+                                                <button onClick={() => handleDeleteExpense(exp._id)} style={{ color: '#ef4444' }}><X size={18} /></button>
+                                            </td>
+                                        </tr>
+                                    )) : (
+                                        <tr><td colSpan="4" style={{ textAlign: 'center', padding: '3rem', color: '#6b7280' }}>Aucune dépense sur cette période.</td></tr>
+                                    )}
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 )}

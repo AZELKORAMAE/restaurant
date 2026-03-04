@@ -3,7 +3,15 @@ import React from 'react';
 import Link from 'next/link';
 import { ShoppingCart, User, Search } from 'lucide-react';
 
-export default function Header({ cartCount = 0, onCartClick, searchQuery, setSearchQuery }) {
+export default function Header({ cartCount = 0, onCartClick, searchQuery, setSearchQuery, dishes = [], collections = [], onSelectDish, onSelectCollection }) {
+    const [showSuggestions, setShowSuggestions] = React.useState(false);
+
+    const suggestions = searchQuery.length > 0 ? {
+        dishes: dishes.filter(d => d.name.toLowerCase().includes(searchQuery.toLowerCase())).slice(0, 5),
+        collections: collections.filter(c => c.name.toLowerCase().includes(searchQuery.toLowerCase())).slice(0, 3)
+    } : { dishes: [], collections: [] };
+
+    const hasSuggestions = suggestions.dishes.length > 0 || suggestions.collections.length > 0;
     return (
         <header style={{
             position: 'sticky',
@@ -62,7 +70,11 @@ export default function Header({ cartCount = 0, onCartClick, searchQuery, setSea
                             type="text"
                             placeholder="Rechercher..."
                             value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
+                            onChange={(e) => {
+                                setSearchQuery(e.target.value);
+                                setShowSuggestions(true);
+                            }}
+                            onFocus={() => setShowSuggestions(true)}
                             style={{
                                 width: '100%',
                                 padding: '0.6rem 1rem 0.6rem 2.5rem',
@@ -73,6 +85,75 @@ export default function Header({ cartCount = 0, onCartClick, searchQuery, setSea
                                 outline: 'none'
                             }}
                         />
+
+                        {showSuggestions && hasSuggestions && (
+                            <div style={{
+                                position: 'absolute',
+                                top: '110%',
+                                left: 0,
+                                right: 0,
+                                backgroundColor: 'white',
+                                borderRadius: '1rem',
+                                boxShadow: '0 10px 25px rgba(0,0,0,0.1)',
+                                border: '1px solid #eee',
+                                overflow: 'hidden',
+                                zIndex: 1000
+                            }}>
+                                {suggestions.collections.length > 0 && (
+                                    <div style={{ padding: '0.5rem 0' }}>
+                                        <div style={{ padding: '0.5rem 1rem', fontSize: '0.75rem', fontWeight: 800, color: 'var(--glovo-gray)', textTransform: 'uppercase' }}>Catégories</div>
+                                        {suggestions.collections.map(c => (
+                                            <div
+                                                key={c._id}
+                                                onClick={() => {
+                                                    onSelectCollection(c);
+                                                    setSearchQuery('');
+                                                    setShowSuggestions(false);
+                                                }}
+                                                style={{ padding: '0.7rem 1rem', display: 'flex', alignItems: 'center', gap: '0.8rem', cursor: 'pointer', transition: 'background 0.2s' }}
+                                                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f9f9f9'}
+                                                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                                            >
+                                                <img src={c.image} style={{ width: '30px', height: '30px', borderRadius: '0.3rem', objectFit: 'cover' }} />
+                                                <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>{c.name}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+
+                                {suggestions.dishes.length > 0 && (
+                                    <div style={{ padding: '0.5rem 0', borderTop: suggestions.collections.length > 0 ? '1px solid #eee' : 'none' }}>
+                                        <div style={{ padding: '0.5rem 1rem', fontSize: '0.75rem', fontWeight: 800, color: 'var(--glovo-gray)', textTransform: 'uppercase' }}>Produits</div>
+                                        {suggestions.dishes.map(d => (
+                                            <div
+                                                key={d._id}
+                                                onClick={() => {
+                                                    onSelectDish(d);
+                                                    setSearchQuery('');
+                                                    setShowSuggestions(false);
+                                                }}
+                                                style={{ padding: '0.7rem 1rem', display: 'flex', alignItems: 'center', gap: '0.8rem', cursor: 'pointer', transition: 'background 0.2s' }}
+                                                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f9f9f9'}
+                                                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                                            >
+                                                <img src={d.image} style={{ width: '30px', height: '30px', borderRadius: '0.3rem', objectFit: 'cover' }} />
+                                                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                    <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>{d.name}</span>
+                                                    <span style={{ fontSize: '0.8rem', color: 'var(--glovo-green)', fontWeight: 700 }}>{d.price}€</span>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {showSuggestions && (
+                            <div
+                                onClick={() => setShowSuggestions(false)}
+                                style={{ position: 'fixed', inset: 0, zIndex: 900 }}
+                            />
+                        )}
                     </div>
 
                     <button

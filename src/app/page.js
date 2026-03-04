@@ -67,6 +67,16 @@ export default function Home() {
         onCartClick={() => setIsCartOpen(true)}
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
+        dishes={dishes}
+        collections={collections}
+        onSelectDish={(dish) => {
+          setSelectedDish(dish);
+          setSearchQuery('');
+        }}
+        onSelectCollection={(coll) => {
+          setSelectedCollection(coll);
+          setSearchQuery('');
+        }}
       />
 
       {/* Hero Section */}
