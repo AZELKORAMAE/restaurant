@@ -47,7 +47,7 @@ export default function AdminDashboard() {
     };
 
     const fetchData = async () => {
-        const [ordersRes, dishesRes, collsRes, suppsRes] = await Promise.all([
+        const [ordersRes, dishesRes, collsRes, suppsRes, tablesRes] = await Promise.all([
             fetch('/api/orders').then(res => res.json()),
             fetch('/api/dishes').then(res => res.json()),
             fetch('/api/collections').then(res => res.json()),
