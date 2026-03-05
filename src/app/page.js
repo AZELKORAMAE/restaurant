@@ -167,13 +167,14 @@ export default function Home() {
           </div>
         ) : (
           <>
-            {/* Compact Collection Grid */}
+            {/* Simple Collection List (One per line) */}
             {!selectedCollection && (
               <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
-                gap: '1rem',
-                marginBottom: '4rem'
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '1.2rem',
+                marginBottom: '4rem',
+                padding: '0 1.5rem' // Increased left/right margins
               }}>
                 {filteredCollections.map(c => (
                   <div
@@ -181,8 +182,9 @@ export default function Home() {
                     onClick={() => setSelectedCollection(c)}
                     style={{
                       position: 'relative',
-                      height: '110px',
-                      borderRadius: '1.25rem',
+                      width: '100%',
+                      height: '100px', // Compact height
+                      borderRadius: '1.5rem',
                       overflow: 'hidden',
                       cursor: 'pointer',
                       transition: 'all 0.3s ease',
@@ -191,11 +193,11 @@ export default function Home() {
                       filter: c.isActive === false ? 'grayscale(80%)' : 'none'
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.transform = 'translateY(-4px)';
+                      e.currentTarget.style.transform = 'scale(1.01)';
                       e.currentTarget.style.boxShadow = '0 10px 25px rgba(0,0,0,0.12)';
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.transform = 'scale(1)';
                       e.currentTarget.style.boxShadow = '0 4px 15px rgba(0,0,0,0.08)';
                     }}
                   >
@@ -203,31 +205,31 @@ export default function Home() {
                     <div style={{
                       position: 'absolute',
                       inset: 0,
-                      background: 'linear-gradient(transparent, rgba(0,0,0,0.7))',
+                      background: 'linear-gradient(90deg, rgba(0,0,0,0.7) 0%, transparent 60%)',
                       display: 'flex',
-                      flexDirection: 'column',
                       alignItems: 'center',
-                      justifyContent: 'center',
-                      padding: '0.8rem',
-                      textAlign: 'center'
+                      padding: '0 2rem'
                     }}>
-                      <span style={{
-                        color: 'white',
-                        fontSize: '0.95rem',
-                        fontWeight: 800,
-                        textShadow: '0 2px 4px rgba(0,0,0,0.2)'
-                      }}>{c.name}</span>
-                      {c.isActive === false && (
+                      <div style={{ textAlign: 'left' }}>
                         <span style={{
-                          fontSize: '0.55rem',
-                          backgroundColor: '#ef4444',
                           color: 'white',
-                          padding: '1px 5px',
-                          borderRadius: '3px',
-                          marginTop: '0.2rem',
-                          fontWeight: 900
-                        }}>OFF</span>
-                      )}
+                          fontSize: '1.2rem',
+                          fontWeight: 800,
+                          textShadow: '0 2px 4px rgba(0,0,0,0.3)'
+                        }}>{c.name}</span>
+                        {c.isActive === false && (
+                          <div style={{
+                            fontSize: '0.6rem',
+                            backgroundColor: '#ef4444',
+                            color: 'white',
+                            padding: '2px 6px',
+                            borderRadius: '4px',
+                            marginTop: '0.4rem',
+                            fontWeight: 900,
+                            display: 'inline-block'
+                          }}>INDISPONIBLE</div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}
