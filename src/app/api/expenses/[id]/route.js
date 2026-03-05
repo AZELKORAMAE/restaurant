@@ -5,7 +5,7 @@ import Expense from "@/models/Expense";
 export async function DELETE(req, { params }) {
     await dbConnect();
     try {
-        const { id } = params;
+        const { id } = await params;
         const deletedExpense = await Expense.findByIdAndDelete(id);
 
         if (!deletedExpense) {

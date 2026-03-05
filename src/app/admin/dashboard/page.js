@@ -390,10 +390,16 @@ export default function AdminDashboard() {
     const handleDeleteExpense = async (id) => {
         if (!confirm('Supprimer cette dépense ?')) return;
         try {
-            await fetch(`/api/expenses/${id}`, { method: 'DELETE' });
-            fetchData();
+            const res = await fetch(`/api/expenses/${id}`, { method: 'DELETE' });
+            const json = await res.json();
+            if (json.success) {
+                fetchData();
+            } else {
+                alert("Erreur: " + (json.error || "Impossible de supprimer"));
+            }
         } catch (err) {
             console.error("Delete error", err);
+            alert("Erreur réseau ou serveur");
         }
     };
 
