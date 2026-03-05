@@ -5,7 +5,7 @@ import Supplement from '@/models/Supplement';
 export async function GET() {
     try {
         await dbConnect();
-        const supplements = await Supplement.find({ isActive: true });
+        const supplements = await Supplement.find({});
         return NextResponse.json({ success: true, data: supplements });
     } catch (error) {
         return NextResponse.json({ success: false, error: error.message }, { status: 400 });

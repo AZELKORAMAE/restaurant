@@ -7,7 +7,7 @@ import Supplement from '@/models/Supplement'; // Ensure model is registered
 export async function GET() {
     try {
         await dbConnect();
-        const dishes = await Dish.find({ isActive: true })
+        const dishes = await Dish.find({})
             .populate('collection')
             .populate('supplements');
         return NextResponse.json({ success: true, data: dishes });
