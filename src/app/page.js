@@ -167,50 +167,91 @@ export default function Home() {
           </div>
         ) : (
           <>
-            {/* Collection Selector */}
+            {/* Horizontal Collection Selector */}
             {!selectedCollection && (
               <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
-                gap: '1.5rem',
-                marginBottom: '5rem'
-              }}>
-                {filteredCollections.map(c => (
-                  <div
-                    key={c._id}
-                    onClick={() => setSelectedCollection(c)}
-                    style={{
-                      position: 'relative',
-                      height: 'clamp(180px, 30vw, 240px)',
-                      borderRadius: '2rem',
-                      overflow: 'hidden',
-                      cursor: 'pointer',
-                      transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-                      boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
-                      transform: 'translateY(0)'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.transform = 'translateY(-10px)';
-                      e.currentTarget.style.boxShadow = '0 20px 40px rgba(0,0,0,0.2)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.transform = 'translateY(0)';
-                      e.currentTarget.style.boxShadow = '0 10px 30px rgba(0,0,0,0.1)';
-                    }}
-                  >
-                    <img src={c.image || 'https://via.placeholder.com/400'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    <div style={{
-                      position: 'absolute',
-                      inset: 0,
-                      background: 'linear-gradient(transparent, rgba(0,0,0,0.8))',
-                      display: 'flex',
-                      alignItems: 'flex-end',
-                      padding: '1.5rem'
-                    }}>
-                      <span style={{ color: 'white', fontSize: '1.4rem', fontWeight: 800 }}>{c.name}</span>
+                overflowX: 'auto',
+                paddingBottom: '2rem',
+                marginBottom: '3rem',
+                scrollbarWidth: 'none',
+                msOverflowStyle: 'none'
+              }} className="hide-scrollbar">
+                <style>{`
+                  .hide-scrollbar::-webkit-scrollbar { display: none; }
+                `}</style>
+                <div style={{
+                  display: 'flex',
+                  gap: '1.2rem',
+                  padding: '0.5rem',
+                  width: 'max-content',
+                  minWidth: '100%'
+                }}>
+                  {filteredCollections.map(c => (
+                    <div
+                      key={c._id}
+                      onClick={() => setSelectedCollection(c)}
+                      style={{
+                        position: 'relative',
+                        width: 'clamp(140px, 40vw, 180px)',
+                        height: 'clamp(100px, 25vw, 130px)',
+                        borderRadius: '1.5rem',
+                        overflow: 'hidden',
+                        cursor: 'pointer',
+                        transition: 'all 0.3s ease',
+                        boxShadow: '0 8px 20px rgba(0,0,0,0.1)',
+                        flexShrink: 0
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = 'translateY(-5px)';
+                        e.currentTarget.style.boxShadow = '0 15px 30px rgba(0,0,0,0.15)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'translateY(0)';
+                        e.currentTarget.style.boxShadow = '0 8px 20px rgba(0,0,0,0.1)';
+                      }}
+                    >
+                      <img
+                        src={c.image || 'https://via.placeholder.com/400'}
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
+                          opacity: c.isActive === false ? 0.6 : 1,
+                          filter: c.isActive === false ? 'grayscale(100%)' : 'none'
+                        }}
+                      />
+                      <div style={{
+                        position: 'absolute',
+                        inset: 0,
+                        background: 'linear-gradient(transparent, rgba(0,0,0,0.8))',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        padding: '0.5rem',
+                        textAlign: 'center'
+                      }}>
+                        <span style={{
+                          color: 'white',
+                          fontSize: '1.1rem',
+                          fontWeight: 800,
+                          textShadow: '0 2px 4px rgba(0,0,0,0.3)'
+                        }}>{c.name}</span>
+                        {c.isActive === false && (
+                          <span style={{
+                            fontSize: '0.6rem',
+                            backgroundColor: '#ef4444',
+                            color: 'white',
+                            padding: '2px 6px',
+                            borderRadius: '4px',
+                            marginTop: '0.3rem',
+                            fontWeight: 900
+                          }}>OFF</span>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             )}
 
