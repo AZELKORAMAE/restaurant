@@ -211,14 +211,47 @@ export default function Header({ cartCount = 0, onCartClick, searchQuery, setSea
                 </div>
             </div>
 
-            <div style={{ overflowX: 'auto', borderTop: '1px solid #f9f9f9', marginTop: '0.5rem' }}>
-                <div className="container" style={{ display: 'flex', gap: '1rem', padding: '0.8rem 1rem' }}>
+            <div style={{ overflowX: 'auto', borderTop: '1px solid #f9f9f9', marginTop: '0.2rem', scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                <style>{`
+                    .collections-scroll-container::-webkit-scrollbar {
+                        display: none;
+                    }
+                `}</style>
+                <div className="container collections-scroll-container" style={{
+                    display: 'flex',
+                    gap: '1.2rem',
+                    padding: '0.6rem 1rem',
+                    flexWrap: 'nowrap',
+                    width: 'max-content',
+                    minWidth: '100%'
+                }}>
                     <div
                         className={`collection-card ${!selectedCollection ? 'active' : ''}`}
                         onClick={() => onSelectCollection(null)}
-                        style={{ cursor: 'pointer' }}
+                        style={{
+                            cursor: 'pointer',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: '0.3rem',
+                            flexShrink: 0
+                        }}
                     >
-                        <span>Tout</span>
+                        <div style={{
+                            width: '32px',
+                            height: '32px',
+                            borderRadius: '50%',
+                            backgroundColor: !selectedCollection ? 'var(--glovo-yellow)' : '#f3f4f6',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '0.7rem',
+                            fontWeight: 800,
+                            color: !selectedCollection ? 'var(--glovo-dark)' : '#6b7280'
+                        }}>
+                            ALL
+                        </div>
+                        <span style={{ fontSize: '0.75rem', fontWeight: 700 }}>Tout</span>
                     </div>
                     {collections.map(cat => {
                         const isInactive = cat.isActive === false;
@@ -232,23 +265,28 @@ export default function Header({ cartCount = 0, onCartClick, searchQuery, setSea
                                     opacity: isInactive ? 0.5 : 1,
                                     filter: isInactive ? 'grayscale(100%)' : 'none',
                                     cursor: 'pointer',
-                                    position: 'relative'
+                                    position: 'relative',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    gap: '0.3rem',
+                                    flexShrink: 0
                                 }}
                             >
-                                <img src={cat.image} alt={cat.name} style={{ width: '40px', height: '40px', borderRadius: '0.4rem', objectFit: 'cover' }} />
-                                <span>{cat.name}</span>
+                                <img src={cat.image} alt={cat.name} style={{ width: '32px', height: '32px', borderRadius: '0.4rem', objectFit: 'cover' }} />
+                                <span style={{ fontSize: '0.75rem', fontWeight: isSelected ? 800 : 600 }}>{cat.name}</span>
                                 {isInactive && (
                                     <div style={{
                                         position: 'absolute',
-                                        bottom: '-2px',
-                                        left: '50%',
-                                        transform: 'translateX(-50%)',
+                                        top: '-4px',
+                                        right: '-4px',
                                         backgroundColor: '#ef4444',
                                         color: 'white',
-                                        fontSize: '0.5rem',
-                                        padding: '1px 4px',
+                                        fontSize: '0.45rem',
+                                        padding: '1px 3px',
                                         borderRadius: '4px',
-                                        fontWeight: 800
+                                        fontWeight: 900,
+                                        zIndex: 5
                                     }}>
                                         OFF
                                     </div>

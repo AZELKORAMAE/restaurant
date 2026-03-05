@@ -301,40 +301,64 @@ export default function AdminDashboard() {
     };
 
     const handleToggleDish = async (dish) => {
+        const originalDishes = [...dishes];
+        // Optimistic update
+        setDishes(dishes.map(d => d._id === dish._id ? { ...d, isActive: !d.isActive } : d));
+
         try {
             const res = await fetch(`/api/dishes/${dish._id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ ...dish, isActive: !dish.isActive })
             });
-            if (res.ok) fetchDishes();
+            if (!res.ok) {
+                setDishes(originalDishes);
+                alert("Erreur lors de la mise à jour");
+            }
         } catch (err) {
+            setDishes(originalDishes);
             console.error("Toggle failed", err);
         }
     };
 
     const handleToggleCollection = async (collection) => {
+        const originalCollections = [...collections];
+        // Optimistic update
+        setCollections(collections.map(c => c._id === collection._id ? { ...c, isActive: !c.isActive } : c));
+
         try {
             const res = await fetch(`/api/collections/${collection._id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ ...collection, isActive: !collection.isActive })
             });
-            if (res.ok) fetchCollections();
+            if (!res.ok) {
+                setCollections(originalCollections);
+                alert("Erreur lors de la mise à jour");
+            }
         } catch (err) {
+            setCollections(originalCollections);
             console.error("Toggle failed", err);
         }
     };
 
     const handleToggleSupplement = async (sup) => {
+        const originalSupplements = [...supplements];
+        // Optimistic update
+        setSupplements(supplements.map(s => s._id === sup._id ? { ...s, isActive: !s.isActive } : s));
+
         try {
             const res = await fetch(`/api/supplements/${sup._id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ ...sup, isActive: !sup.isActive })
             });
-            if (res.ok) fetchSupplements();
+            if (!res.ok) {
+                setSupplements(originalSupplements);
+                alert("Erreur lors de la mise à jour");
+            }
         } catch (err) {
+            setSupplements(originalSupplements);
             console.error("Toggle failed", err);
         }
     };
