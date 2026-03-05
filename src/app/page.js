@@ -183,7 +183,7 @@ export default function Home() {
                     style={{
                       position: 'relative',
                       width: '100%',
-                      height: '140px', // Increased height
+                      height: '160px', // Increased height
                       borderRadius: '1.8rem',
                       overflow: 'hidden',
                       cursor: 'pointer',
