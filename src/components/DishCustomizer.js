@@ -176,51 +176,57 @@ export default function DishCustomizer({ dish, onClose, onAddToCart }) {
                         <div style={{ marginBottom: '2rem' }}>
                             <h3 style={{ fontSize: '1.1rem', fontWeight: 800, marginBottom: '1rem' }}>Ajouter des suppléments</h3>
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1rem' }}>
-                                {dish.supplements?.filter(s => s.isActive !== false).map(sup => (
-                                    <div
-                                        key={sup._id}
-                                        onClick={() => toggleSupplement(sup._id)}
-                                        style={{
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            padding: '1rem',
-                                            borderRadius: '1rem',
-                                            border: `2px solid ${selectedSupplements.includes(sup._id) ? 'var(--glovo-green)' : '#eee'}`,
-                                            background: selectedSupplements.includes(sup._id) ? '#f0fdf4' : 'white',
-                                            cursor: 'pointer',
-                                            gap: '1rem'
-                                        }}
-                                    >
-                                        <div style={{
-                                            width: '48px',
-                                            height: '48px',
-                                            borderRadius: '50%',
-                                            backgroundColor: '#f3f4f6',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            overflow: 'hidden',
-                                            flexShrink: 0,
-                                            border: '1px solid #eee'
-                                        }}>
-                                            {sup.image ? (
-                                                <img src={sup.image} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                            ) : (
-                                                <div style={{ color: '#9ca3af', fontSize: '0.7rem' }}>Icon</div>
-                                            )}
+                                {dish.supplements?.map(sup => {
+                                    const isInactive = sup.isActive === false;
+                                    return (
+                                        <div
+                                            key={sup._id}
+                                            onClick={() => !isInactive && toggleSupplement(sup._id)}
+                                            style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                padding: '1rem',
+                                                borderRadius: '1rem',
+                                                border: `2px solid ${selectedSupplements.includes(sup._id) ? 'var(--glovo-green)' : '#eee'}`,
+                                                background: isInactive ? '#f9f9f9' : (selectedSupplements.includes(sup._id) ? '#f0fdf4' : 'white'),
+                                                cursor: isInactive ? 'not-allowed' : 'pointer',
+                                                gap: '1rem',
+                                                opacity: isInactive ? 0.6 : 1,
+                                                filter: isInactive ? 'grayscale(100%)' : 'none'
+                                            }}
+                                        >
+                                            <div style={{
+                                                width: '48px',
+                                                height: '48px',
+                                                borderRadius: '50%',
+                                                backgroundColor: '#f3f4f6',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                overflow: 'hidden',
+                                                flexShrink: 0,
+                                                border: '1px solid #eee'
+                                            }}>
+                                                {sup.image ? (
+                                                    <img src={sup.image} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                ) : (
+                                                    <div style={{ color: '#9ca3af', fontSize: '0.7rem' }}>Icon</div>
+                                                )}
+                                            </div>
+                                            <div style={{ flexGrow: 1 }}>
+                                                <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>{sup.name}</div>
+                                                <div style={{ fontSize: '0.8rem', color: 'var(--glovo-gray)' }}>+{sup.price}DH</div>
+                                            </div>
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedSupplements.includes(sup._id)}
+                                                readOnly
+                                                disabled={isInactive}
+                                                style={{ accentColor: 'var(--glovo-green)' }}
+                                            />
                                         </div>
-                                        <div style={{ flexGrow: 1 }}>
-                                            <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>{sup.name}</div>
-                                            <div style={{ fontSize: '0.8rem', color: 'var(--glovo-gray)' }}>+{sup.price}DH</div>
-                                        </div>
-                                        <input
-                                            type="checkbox"
-                                            checked={selectedSupplements.includes(sup._id)}
-                                            readOnly
-                                            style={{ accentColor: 'var(--glovo-green)' }}
-                                        />
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         </div>
                     )}

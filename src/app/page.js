@@ -47,15 +47,7 @@ export default function Home() {
     setIsCartOpen(true);
   };
 
-  const activeCollections = collections.filter(c => c.isActive !== false);
-
   const filteredDishes = dishes.filter(d => {
-    // A dish is visible if its collection is active
-    const dishCollection = collections.find(c => c._id === (d.collection?._id || d.collection));
-    const isCollectionActive = !dishCollection || dishCollection.isActive !== false;
-
-    if (!isCollectionActive) return false;
-
     const matchesCollection = selectedCollection ? d.collection?._id === selectedCollection._id : true;
     const matchesSearch = searchQuery
       ? d.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -65,8 +57,8 @@ export default function Home() {
   });
 
   const filteredCollections = searchQuery
-    ? activeCollections.filter(c => c.name.toLowerCase().includes(searchQuery.toLowerCase()))
-    : activeCollections;
+    ? collections.filter(c => c.name.toLowerCase().includes(searchQuery.toLowerCase()))
+    : collections;
 
   return (
     <main style={{ backgroundColor: '#fdfdfd' }}>

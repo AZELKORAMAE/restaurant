@@ -3,7 +3,7 @@ import React from 'react';
 import Link from 'next/link';
 import { ShoppingCart, User, Search } from 'lucide-react';
 
-export default function Header({ cartCount = 0, onCartClick, searchQuery, setSearchQuery, dishes = [], collections = [], onSelectDish, onSelectCollection }) {
+export default function Header({ cartCount = 0, onCartClick, searchQuery, setSearchQuery, dishes = [], collections = [], onSelectDish, onSelectCollection, selectedCollection }) {
     const [showSuggestions, setShowSuggestions] = React.useState(false);
 
     const suggestions = searchQuery.length > 0 ? {
@@ -110,12 +110,20 @@ export default function Header({ cartCount = 0, onCartClick, searchQuery, setSea
                                                     setSearchQuery('');
                                                     setShowSuggestions(false);
                                                 }}
-                                                style={{ padding: '0.7rem 1rem', display: 'flex', alignItems: 'center', gap: '0.8rem', cursor: 'pointer', transition: 'background 0.2s' }}
+                                                style={{
+                                                    padding: '0.7rem 1rem',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '0.8rem',
+                                                    cursor: 'pointer',
+                                                    transition: 'background 0.2s',
+                                                    opacity: c.isActive === false ? 0.6 : 1
+                                                }}
                                                 onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f9f9f9'}
                                                 onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                                             >
-                                                <img src={c.image} style={{ width: '30px', height: '30px', borderRadius: '0.3rem', objectFit: 'cover' }} />
-                                                <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>{c.name}</span>
+                                                <img src={c.image} style={{ width: '30px', height: '30px', borderRadius: '0.3rem', objectFit: 'cover', filter: c.isActive === false ? 'grayscale(100%)' : 'none' }} />
+                                                <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>{c.name} {c.isActive === false && '(Hors ligne)'}</span>
                                             </div>
                                         ))}
                                     </div>
@@ -132,13 +140,21 @@ export default function Header({ cartCount = 0, onCartClick, searchQuery, setSea
                                                     setSearchQuery('');
                                                     setShowSuggestions(false);
                                                 }}
-                                                style={{ padding: '0.7rem 1rem', display: 'flex', alignItems: 'center', gap: '0.8rem', cursor: 'pointer', transition: 'background 0.2s' }}
+                                                style={{
+                                                    padding: '0.7rem 1rem',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '0.8rem',
+                                                    cursor: 'pointer',
+                                                    transition: 'background 0.2s',
+                                                    opacity: d.isActive === false ? 0.6 : 1
+                                                }}
                                                 onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f9f9f9'}
                                                 onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                                             >
-                                                <img src={d.image} style={{ width: '30px', height: '30px', borderRadius: '0.3rem', objectFit: 'cover' }} />
+                                                <img src={d.image} style={{ width: '30px', height: '30px', borderRadius: '0.3rem', objectFit: 'cover', filter: d.isActive === false ? 'grayscale(100%)' : 'none' }} />
                                                 <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                                    <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>{d.name}</span>
+                                                    <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>{d.name} {d.isActive === false && '(Hors ligne)'}</span>
                                                     <span style={{ fontSize: '0.8rem', color: 'var(--glovo-green)', fontWeight: 700 }}>{d.price}DH</span>
                                                 </div>
                                             </div>
@@ -147,14 +163,14 @@ export default function Header({ cartCount = 0, onCartClick, searchQuery, setSea
                                 )}
                             </div>
                         )}
-
-                        {showSuggestions && (
-                            <div
-                                onClick={() => setShowSuggestions(false)}
-                                style={{ position: 'fixed', inset: 0, zIndex: 900 }}
-                            />
-                        )}
                     </div>
+
+                    {showSuggestions && (
+                        <div
+                            onClick={() => setShowSuggestions(false)}
+                            style={{ position: 'fixed', inset: 0, zIndex: 900 }}
+                        />
+                    )}
 
                     <button
                         onClick={onCartClick}
@@ -192,6 +208,54 @@ export default function Header({ cartCount = 0, onCartClick, searchQuery, setSea
                             </span>
                         )}
                     </button>
+                </div>
+            </div>
+
+            <div style={{ overflowX: 'auto', borderTop: '1px solid #f9f9f9', marginTop: '0.5rem' }}>
+                <div className="container" style={{ display: 'flex', gap: '1rem', padding: '0.8rem 1rem' }}>
+                    <div
+                        className={`collection-card ${!selectedCollection ? 'active' : ''}`}
+                        onClick={() => onSelectCollection(null)}
+                        style={{ cursor: 'pointer' }}
+                    >
+                        <span>Tout</span>
+                    </div>
+                    {collections.map(cat => {
+                        const isInactive = cat.isActive === false;
+                        const isSelected = selectedCollection?._id === cat._id;
+                        return (
+                            <div
+                                key={cat._id}
+                                className={`collection-card ${isSelected ? 'active' : ''}`}
+                                onClick={() => onSelectCollection(cat)}
+                                style={{
+                                    opacity: isInactive ? 0.5 : 1,
+                                    filter: isInactive ? 'grayscale(100%)' : 'none',
+                                    cursor: 'pointer',
+                                    position: 'relative'
+                                }}
+                            >
+                                <img src={cat.image} alt={cat.name} style={{ width: '40px', height: '40px', borderRadius: '0.4rem', objectFit: 'cover' }} />
+                                <span>{cat.name}</span>
+                                {isInactive && (
+                                    <div style={{
+                                        position: 'absolute',
+                                        bottom: '-2px',
+                                        left: '50%',
+                                        transform: 'translateX(-50%)',
+                                        backgroundColor: '#ef4444',
+                                        color: 'white',
+                                        fontSize: '0.5rem',
+                                        padding: '1px 4px',
+                                        borderRadius: '4px',
+                                        fontWeight: 800
+                                    }}>
+                                        OFF
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })}
                 </div>
             </div>
         </header>

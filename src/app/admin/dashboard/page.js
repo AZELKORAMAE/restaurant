@@ -300,6 +300,45 @@ export default function AdminDashboard() {
         }
     };
 
+    const handleToggleDish = async (dish) => {
+        try {
+            const res = await fetch(`/api/dishes/${dish._id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ...dish, isActive: !dish.isActive })
+            });
+            if (res.ok) fetchDishes();
+        } catch (err) {
+            console.error("Toggle failed", err);
+        }
+    };
+
+    const handleToggleCollection = async (collection) => {
+        try {
+            const res = await fetch(`/api/collections/${collection._id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ...collection, isActive: !collection.isActive })
+            });
+            if (res.ok) fetchCollections();
+        } catch (err) {
+            console.error("Toggle failed", err);
+        }
+    };
+
+    const handleToggleSupplement = async (sup) => {
+        try {
+            const res = await fetch(`/api/supplements/${sup._id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ...sup, isActive: !sup.isActive })
+            });
+            if (res.ok) fetchSupplements();
+        } catch (err) {
+            console.error("Toggle failed", err);
+        }
+    };
+
     const handleDeleteExpense = async (id) => {
         if (!confirm('Supprimer cette dépense ?')) return;
         try {
@@ -735,6 +774,22 @@ export default function AdminDashboard() {
                                             ))}
                                         </div>
                                     )}
+                                    <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                                        <button
+                                            onClick={() => handleToggleDish(dish)}
+                                            style={{
+                                                flex: 1,
+                                                padding: '0.5rem',
+                                                background: dish.isActive === false ? 'var(--glovo-green)' : '#f3f4f6',
+                                                color: dish.isActive === false ? 'white' : 'inherit',
+                                                borderRadius: '0.5rem',
+                                                fontWeight: 700,
+                                                fontSize: '0.8rem'
+                                            }}
+                                        >
+                                            {dish.isActive === false ? 'Activer' : 'Désactiver'}
+                                        </button>
+                                    </div>
                                     <div style={{ display: 'flex', gap: '0.5rem' }}>
                                         <button
                                             onClick={() => setEditingDish(dish)}
@@ -755,6 +810,51 @@ export default function AdminDashboard() {
                     </div>
                 )}
 
+                {activeTab === 'supplements' && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                        {/* The "Nouveau Supplément" button is already rendered in the header */}
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '1.5rem' }}>
+                            {supplements.map(s => (
+                                <div key={s._id} className="card" style={{ padding: '1rem', opacity: s.isActive === false ? 0.6 : 1, position: 'relative' }}>
+                                    <div style={{ position: 'relative', textAlign: 'center', marginBottom: '1rem' }}>
+                                        <img src={s.image} alt={s.name} style={{ height: '60px', objectFit: 'contain' }} />
+                                        {s.isActive === false && (
+                                            <div style={{ position: 'absolute', top: '0', right: '0', background: '#ef4444', color: 'white', padding: '0.1rem 0.3rem', borderRadius: '0.3rem', fontSize: '0.6rem', fontWeight: 700 }}>
+                                                OFF
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div style={{ textAlign: 'center' }}>
+                                        <div style={{ fontWeight: 800, fontSize: '0.9rem', marginBottom: '0.2rem' }}>{s.name}</div>
+                                        <div style={{ color: 'var(--glovo-green)', fontWeight: 700, fontSize: '0.8rem', marginBottom: '1rem' }}>{s.price}DH</div>
+
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                                            <button
+                                                onClick={() => handleToggleSupplement(s)}
+                                                style={{
+                                                    width: '100%',
+                                                    padding: '0.4rem',
+                                                    borderRadius: '0.4rem',
+                                                    fontSize: '0.7rem',
+                                                    fontWeight: 700,
+                                                    background: s.isActive === false ? 'var(--glovo-green)' : '#f3f4f6',
+                                                    color: s.isActive === false ? 'white' : 'inherit'
+                                                }}
+                                            >
+                                                {s.isActive === false ? 'Activer' : 'Désactiver'}
+                                            </button>
+                                            <div style={{ display: 'flex', gap: '0.4rem' }}>
+                                                <button onClick={() => setEditingSupplement(s)} style={{ flex: 1, padding: '0.4rem', background: '#f3f4f6', borderRadius: '0.4rem', fontSize: '0.7rem' }}>Modif</button>
+                                                <button onClick={() => handleDeleteSupplement(s._id)} style={{ flex: 1, padding: '0.4rem', background: '#fee2e2', color: '#dc2626', borderRadius: '0.4rem', fontSize: '0.7rem' }}>Suppr</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
                 {activeTab === 'collections' && (
                     <div>
                         <div style={{ background: 'white', borderRadius: 'var(--radius-lg)', padding: '1rem' }}>
@@ -764,7 +864,20 @@ export default function AdminDashboard() {
                                         {c.image && <img src={c.image} style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '0.4rem' }} />}
                                         <span style={{ fontWeight: 600 }}>{c.name}</span>
                                     </div>
-                                    <div style={{ display: 'flex', gap: '1rem' }}>
+                                    <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                                        <button
+                                            onClick={() => handleToggleCollection(c)}
+                                            style={{
+                                                padding: '0.4rem 0.8rem',
+                                                borderRadius: '2rem',
+                                                fontSize: '0.75rem',
+                                                fontWeight: 700,
+                                                background: c.isActive === false ? 'var(--glovo-green)' : '#f3f4f6',
+                                                color: c.isActive === false ? 'white' : 'inherit'
+                                            }}
+                                        >
+                                            {c.isActive === false ? 'Activer' : 'Désactiver'}
+                                        </button>
                                         <button onClick={() => setEditingCollection(c)} style={{ color: 'var(--glovo-green)' }}>Modifier</button>
                                         <button onClick={() => handleDeleteCollection(c._id)} style={{ color: '#dc2626' }}>Supprimer</button>
                                     </div>
