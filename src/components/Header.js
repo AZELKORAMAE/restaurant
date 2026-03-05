@@ -211,16 +211,28 @@ export default function Header({ cartCount = 0, onCartClick, searchQuery, setSea
                 </div>
             </div>
 
-            <div style={{ overflowX: 'auto', borderTop: '1px solid #f9f9f9', marginTop: '0.2rem', scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+            <div style={{
+                overflowX: 'auto',
+                borderTop: '1px solid #f9f9f9',
+                marginTop: '0.2rem',
+                scrollbarWidth: 'none',
+                msOverflowStyle: 'none',
+                scrollSnapType: 'x mandatory',
+                WebkitOverflowScrolling: 'touch'
+            }}>
                 <style>{`
                     .collections-scroll-container::-webkit-scrollbar {
                         display: none;
                     }
+                    .collection-card {
+                        scroll-snap-align: start;
+                        min-width: 60px;
+                    }
                 `}</style>
                 <div className="container collections-scroll-container" style={{
                     display: 'flex',
-                    gap: '1.2rem',
-                    padding: '0.6rem 1rem',
+                    gap: '1.5rem',
+                    padding: '0.8rem 1rem',
                     flexWrap: 'nowrap',
                     width: 'max-content',
                     minWidth: '100%'
@@ -233,21 +245,24 @@ export default function Header({ cartCount = 0, onCartClick, searchQuery, setSea
                             display: 'flex',
                             flexDirection: 'column',
                             alignItems: 'center',
-                            gap: '0.3rem',
-                            flexShrink: 0
+                            gap: '0.4rem',
+                            flexShrink: 0,
+                            width: 'auto'
                         }}
                     >
                         <div style={{
-                            width: '32px',
-                            height: '32px',
+                            width: '48px',
+                            height: '48px',
                             borderRadius: '50%',
                             backgroundColor: !selectedCollection ? 'var(--glovo-yellow)' : '#f3f4f6',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            fontSize: '0.7rem',
+                            fontSize: '0.8rem',
                             fontWeight: 800,
-                            color: !selectedCollection ? 'var(--glovo-dark)' : '#6b7280'
+                            color: !selectedCollection ? 'var(--glovo-dark)' : '#6b7280',
+                            transition: 'all 0.2s',
+                            boxShadow: !selectedCollection ? '0 4px 10px rgba(0,0,0,0.1)' : 'none'
                         }}>
                             ALL
                         </div>
@@ -269,11 +284,20 @@ export default function Header({ cartCount = 0, onCartClick, searchQuery, setSea
                                     display: 'flex',
                                     flexDirection: 'column',
                                     alignItems: 'center',
-                                    gap: '0.3rem',
-                                    flexShrink: 0
+                                    gap: '0.4rem',
+                                    flexShrink: 0,
+                                    width: 'auto'
                                 }}
                             >
-                                <img src={cat.image} alt={cat.name} style={{ width: '32px', height: '32px', borderRadius: '0.4rem', objectFit: 'cover' }} />
+                                <img src={cat.image} alt={cat.name} style={{
+                                    width: '48px',
+                                    height: '48px',
+                                    borderRadius: '0.8rem',
+                                    objectFit: 'cover',
+                                    transition: 'all 0.2s',
+                                    boxShadow: isSelected ? '0 4px 15px rgba(0,0,0,0.15)' : '0 2px 8px rgba(0,0,0,0.05)',
+                                    border: isSelected ? '2px solid var(--glovo-yellow)' : 'none'
+                                }} />
                                 <span style={{ fontSize: '0.75rem', fontWeight: isSelected ? 800 : 600 }}>{cat.name}</span>
                                 {isInactive && (
                                     <div style={{
@@ -282,11 +306,12 @@ export default function Header({ cartCount = 0, onCartClick, searchQuery, setSea
                                         right: '-4px',
                                         backgroundColor: '#ef4444',
                                         color: 'white',
-                                        fontSize: '0.45rem',
-                                        padding: '1px 3px',
+                                        fontSize: '0.5rem',
+                                        padding: '1px 4px',
                                         borderRadius: '4px',
                                         fontWeight: 900,
-                                        zIndex: 5
+                                        zIndex: 5,
+                                        boxShadow: '0 2px 5px rgba(0,0,0,0.2)'
                                     }}>
                                         OFF
                                     </div>
