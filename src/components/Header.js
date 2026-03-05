@@ -226,22 +226,22 @@ export default function Header({ cartCount = 0, onCartClick, searchQuery, setSea
                     }
                     .collection-card {
                         scroll-snap-align: start;
-                        min-width: 50px;
+                        min-width: 80px;
                     }
                     @media (max-width: 480px) {
                         .collection-icon {
-                            width: 38px !important;
-                            height: 38px !important;
+                            width: 50px !important;
+                            height: 50px !important;
                         }
                         .collections-scroll-container {
-                            gap: 1rem !important;
+                            gap: 1.2rem !important;
                         }
                     }
                 `}</style>
                 <div className="container collections-scroll-container" style={{
                     display: 'flex',
-                    gap: '1.5rem',
-                    padding: '0.8rem 1rem',
+                    gap: '2rem',
+                    padding: '1rem',
                     flexWrap: 'nowrap',
                     width: 'max-content',
                     minWidth: '100%'
@@ -262,18 +262,18 @@ export default function Header({ cartCount = 0, onCartClick, searchQuery, setSea
                         <div
                             className="collection-icon"
                             style={{
-                                width: '48px',
-                                height: '48px',
+                                width: '64px',
+                                height: '64px',
                                 borderRadius: '50%',
                                 backgroundColor: !selectedCollection ? 'var(--glovo-yellow)' : '#f3f4f6',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                fontSize: '0.8rem',
+                                fontSize: '0.9rem',
                                 fontWeight: 800,
                                 color: !selectedCollection ? 'var(--glovo-dark)' : '#6b7280',
                                 transition: 'all 0.2s',
-                                boxShadow: !selectedCollection ? '0 4px 10px rgba(0,0,0,0.1)' : 'none'
+                                boxShadow: !selectedCollection ? '0 4px 12px rgba(0,0,0,0.15)' : 'none'
                             }}
                         >
                             ALL
@@ -306,16 +306,16 @@ export default function Header({ cartCount = 0, onCartClick, searchQuery, setSea
                                     alt={cat.name}
                                     className="collection-icon"
                                     style={{
-                                        width: '48px',
-                                        height: '48px',
-                                        borderRadius: '0.8rem',
+                                        width: '64px',
+                                        height: '64px',
+                                        borderRadius: '1rem',
                                         objectFit: 'cover',
                                         transition: 'all 0.2s',
                                         boxShadow: isSelected ? '0 4px 15px rgba(0,0,0,0.15)' : '0 2px 8px rgba(0,0,0,0.05)',
                                         border: isSelected ? '2px solid var(--glovo-yellow)' : 'none'
                                     }}
                                 />
-                                <span style={{ fontSize: '0.75rem', fontWeight: isSelected ? 800 : 600 }}>{cat.name}</span>
+                                <span style={{ fontSize: '0.8rem', fontWeight: isSelected ? 800 : 700 }}>{cat.name}</span>
                                 {isInactive && (
                                     <div style={{
                                         position: 'absolute',
