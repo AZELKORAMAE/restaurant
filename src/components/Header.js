@@ -226,7 +226,7 @@ export default function Header({ cartCount = 0, onCartClick, searchQuery, setSea
                     }
                     .collection-card {
                         scroll-snap-align: start;
-                        min-width: 80px;
+                        min-width: 100px;
                     }
                     @media (max-width: 480px) {
                         .collection-icon {

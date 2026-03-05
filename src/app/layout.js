@@ -1,5 +1,5 @@
 import './globals.css';
-import { Outfit, Playfair_Display, Arizonia } from 'next/font/google';
+import { Outfit, Playfair_Display, Arizonia, Permanent_Marker } from 'next/font/google';
 import { Providers } from '@/components/Providers';
 
 const outfit = Outfit({
@@ -18,6 +18,12 @@ const arizonia = Arizonia({
   variable: '--font-arizonia',
 });
 
+const permanentMarker = Permanent_Marker({
+  weight: '400',
+  subsets: ['latin'],
+  variable: '--font-permanent',
+});
+
 export const metadata = {
   title: 'Gourmet - L’art de bien manger',
   description: 'Découvrez une expérience culinaire d’exception, livrée chez vous.',
@@ -25,7 +31,7 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="fr" className={`${outfit.variable} ${playfair.variable} ${arizonia.variable}`}>
+    <html lang="fr" className={`${outfit.variable} ${playfair.variable} ${arizonia.variable} ${permanentMarker.variable}`}>
       <body className={outfit.className}>
         <Providers>
           {children}

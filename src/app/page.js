@@ -113,12 +113,12 @@ export default function Home() {
               lineHeight: 1.1,
               textShadow: '0 4px 30px rgba(0,0,0,0.3)'
             }}>
-              L'Art de Vivre <br />
+              <span className="font-marker">L'Art de Vivre</span> <br />
               <span className="font-accent" style={{ color: 'var(--glovo-yellow)', fontSize: '1.2em' }}>
                 Gourmand
               </span> 🍷
             </h1>
-            <p style={{
+            <p className="font-marker" style={{
               fontSize: 'clamp(1.1rem, 4vw, 1.5rem)',
               opacity: 0.95,
               maxWidth: '700px',
