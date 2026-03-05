@@ -39,8 +39,9 @@ h2,
 h3,
 h4 {
   font-family: var(--font-serif);
-  font-weight: 800;
-  line-height: 1.2;
+  font-weight: 900;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
 }
 
 a {

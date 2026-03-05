@@ -226,7 +226,16 @@ export default function Header({ cartCount = 0, onCartClick, searchQuery, setSea
                     }
                     .collection-card {
                         scroll-snap-align: start;
-                        min-width: 60px;
+                        min-width: 50px;
+                    }
+                    @media (max-width: 480px) {
+                        .collection-icon {
+                            width: 38px !important;
+                            height: 38px !important;
+                        }
+                        .collections-scroll-container {
+                            gap: 1rem !important;
+                        }
                     }
                 `}</style>
                 <div className="container collections-scroll-container" style={{
@@ -250,20 +259,23 @@ export default function Header({ cartCount = 0, onCartClick, searchQuery, setSea
                             width: 'auto'
                         }}
                     >
-                        <div style={{
-                            width: '48px',
-                            height: '48px',
-                            borderRadius: '50%',
-                            backgroundColor: !selectedCollection ? 'var(--glovo-yellow)' : '#f3f4f6',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontSize: '0.8rem',
-                            fontWeight: 800,
-                            color: !selectedCollection ? 'var(--glovo-dark)' : '#6b7280',
-                            transition: 'all 0.2s',
-                            boxShadow: !selectedCollection ? '0 4px 10px rgba(0,0,0,0.1)' : 'none'
-                        }}>
+                        <div
+                            className="collection-icon"
+                            style={{
+                                width: '48px',
+                                height: '48px',
+                                borderRadius: '50%',
+                                backgroundColor: !selectedCollection ? 'var(--glovo-yellow)' : '#f3f4f6',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: '0.8rem',
+                                fontWeight: 800,
+                                color: !selectedCollection ? 'var(--glovo-dark)' : '#6b7280',
+                                transition: 'all 0.2s',
+                                boxShadow: !selectedCollection ? '0 4px 10px rgba(0,0,0,0.1)' : 'none'
+                            }}
+                        >
                             ALL
                         </div>
                         <span style={{ fontSize: '0.75rem', fontWeight: 700 }}>Tout</span>
@@ -289,15 +301,20 @@ export default function Header({ cartCount = 0, onCartClick, searchQuery, setSea
                                     width: 'auto'
                                 }}
                             >
-                                <img src={cat.image} alt={cat.name} style={{
-                                    width: '48px',
-                                    height: '48px',
-                                    borderRadius: '0.8rem',
-                                    objectFit: 'cover',
-                                    transition: 'all 0.2s',
-                                    boxShadow: isSelected ? '0 4px 15px rgba(0,0,0,0.15)' : '0 2px 8px rgba(0,0,0,0.05)',
-                                    border: isSelected ? '2px solid var(--glovo-yellow)' : 'none'
-                                }} />
+                                <img
+                                    src={cat.image}
+                                    alt={cat.name}
+                                    className="collection-icon"
+                                    style={{
+                                        width: '48px',
+                                        height: '48px',
+                                        borderRadius: '0.8rem',
+                                        objectFit: 'cover',
+                                        transition: 'all 0.2s',
+                                        boxShadow: isSelected ? '0 4px 15px rgba(0,0,0,0.15)' : '0 2px 8px rgba(0,0,0,0.05)',
+                                        border: isSelected ? '2px solid var(--glovo-yellow)' : 'none'
+                                    }}
+                                />
                                 <span style={{ fontSize: '0.75rem', fontWeight: isSelected ? 800 : 600 }}>{cat.name}</span>
                                 {isInactive && (
                                     <div style={{

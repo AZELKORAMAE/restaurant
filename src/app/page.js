@@ -81,30 +81,50 @@ export default function Home() {
 
       {/* Hero Section */}
       {!selectedCollection ? (
-        <section style={{
-          position: 'relative',
-          padding: '10rem 0',
-          textAlign: 'center',
-          backgroundImage: 'linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.7)), url("https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&w=1920&q=80")',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundAttachment: 'fixed',
-          color: 'white'
-        }}>
+        <section
+          className="hero-section"
+          style={{
+            position: 'relative',
+            padding: '10rem 0',
+            textAlign: 'center',
+            backgroundImage: 'linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.7)), url("https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&w=1920&q=80")',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundColor: '#1a1a1a', // Fallback
+            color: 'white'
+          }}
+        >
+          <style>{`
+            @media (min-width: 769px) {
+              .hero-section {
+                background-attachment: fixed;
+              }
+            }
+          `}</style>
           <div className="container" style={{ position: 'relative', zIndex: 1 }}>
             <h1 style={{
-              fontSize: 'clamp(2.5rem, 8vw, 4.5rem)',
+              fontSize: 'clamp(3rem, 10vw, 5rem)',
               fontWeight: 900,
               marginBottom: '1.5rem',
-              letterSpacing: '-2px',
+              letterSpacing: '-0.03em',
               fontFamily: 'var(--font-serif)',
               animation: 'fadeInUp 1s ease-out',
-              padding: '0 1rem'
+              padding: '0 1rem',
+              lineHeight: 1.1,
+              textShadow: '0 4px 30px rgba(0,0,0,0.3)'
             }}>
-              L'Art de Vivre <br /> Gourmand 🍷
+              L'Art de Vivre <br /> <span style={{ color: 'var(--glovo-yellow)' }}>Gourmand</span> 🍷
             </h1>
-            <p style={{ fontSize: '1.5rem', opacity: 0.9, maxWidth: '600px', margin: '0 auto', fontWeight: 300 }}>
-              Chaque plat raconte une histoire, chaque saveur un voyage.
+            <p style={{
+              fontSize: 'clamp(1.1rem, 4vw, 1.5rem)',
+              opacity: 0.95,
+              maxWidth: '700px',
+              margin: '0 auto',
+              fontWeight: 400,
+              letterSpacing: '0.01em',
+              lineHeight: 1.6
+            }}>
+              Chaque plat raconte une histoire, chaque saveur un voyage sensoriel inoubliable.
             </p>
           </div>
         </section>
