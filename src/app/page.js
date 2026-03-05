@@ -172,9 +172,9 @@ export default function Home() {
               <div style={{
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '1.2rem',
+                gap: '1.5rem',
                 marginBottom: '4rem',
-                padding: '0 1.5rem' // Increased left/right margins
+                padding: '0 1.5rem' // Consistent margins
               }}>
                 {filteredCollections.map(c => (
                   <div
@@ -183,8 +183,8 @@ export default function Home() {
                     style={{
                       position: 'relative',
                       width: '100%',
-                      height: '100px', // Compact height
-                      borderRadius: '1.5rem',
+                      height: '140px', // Increased height
+                      borderRadius: '1.8rem',
                       overflow: 'hidden',
                       cursor: 'pointer',
                       transition: 'all 0.3s ease',
@@ -237,10 +237,12 @@ export default function Home() {
             )}
 
             {/* Dishes Grid */}
+            {/* Dish Grid with Same Margins */}
             <div style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-              gap: '2.5rem'
+              gap: '2.5rem',
+              padding: '0 1.5rem' // Matching margins with collections
             }}>
               {filteredDishes.map(dish => (
                 <DishCard
