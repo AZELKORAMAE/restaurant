@@ -8,6 +8,7 @@ import DishForm from '@/components/admin/DishForm';
 import CollectionForm from '@/components/admin/CollectionForm';
 import SupplementForm from '@/components/admin/SupplementForm';
 import ExpenseForm from '@/components/admin/ExpenseForm';
+import { useRef } from 'react';
 
 export default function AdminDashboard() {
     const [activeTab, setActiveTab] = useState('orders');
@@ -32,6 +33,8 @@ export default function AdminDashboard() {
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
     const [selectedStockIcon, setSelectedStockIcon] = useState(null);
+    const audioRef = useRef(null);
+    const prevOrdersCountRef = useRef(0);
 
     const handleUpdateOrderStatus = async (orderId, newStatus) => {
         try {
@@ -73,7 +76,28 @@ export default function AdminDashboard() {
     useEffect(() => {
         // Fetch data for dashboard
         fetchData();
+
+        // Polling for new orders every 10 seconds
+        const interval = setInterval(() => {
+            fetchData();
+        }, 10000);
+
+        return () => clearInterval(interval);
     }, []);
+
+    const playNotificationSound = () => {
+        if (audioRef.current) {
+            audioRef.current.play().catch(e => console.log("Audio play failed:", e));
+        }
+    };
+
+    useEffect(() => {
+        const pendingOrders = orders.filter(o => o.status === 'pending');
+        if (pendingOrders.length > prevOrdersCountRef.current) {
+            playNotificationSound();
+        }
+        prevOrdersCountRef.current = pendingOrders.length;
+    }, [orders]);
 
     const handleFileUpload = async (file) => {
         if (!file) return null;
@@ -412,6 +436,9 @@ export default function AdminDashboard() {
 
     return (
         <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#f9fafb' }}>
+            {/* Audio for notifications */}
+            <audio ref={audioRef} src="/notification.mp3" preload="auto" />
+
             {(showDishForm || editingDish) && (
                 <DishForm
                     onSave={handleCreateDish}
@@ -434,13 +461,16 @@ export default function AdminDashboard() {
                     onCancel={() => { setShowSupplementForm(false); setEditingSupplement(null); }}
                     initialData={editingSupplement}
                 />
-            )}
-            {showExpenseForm && (
-                <ExpenseForm
-                    onSave={handleCreateExpense}
-                    onCancel={() => setShowExpenseForm(false)}
-                />
-            )}
+            )
+            }
+            {
+                showExpenseForm && (
+                    <ExpenseForm
+                        onSave={handleCreateExpense}
+                        onCancel={() => setShowExpenseForm(false)}
+                    />
+                )
+            }
             {/* Sidebar */}
             <aside style={{
                 width: '260px',
@@ -1128,7 +1158,7 @@ export default function AdminDashboard() {
                     </div>
                 )}
             </main>
-        </div>
+        </div >
     );
 }
 
