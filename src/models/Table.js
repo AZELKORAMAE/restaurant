@@ -1,10 +1,10 @@
 import mongoose from 'mongoose';
 
 const TableSchema = new mongoose.Schema({
+    restaurant: { type: mongoose.Schema.Types.ObjectId, ref: 'Restaurant', index: true },
     number: {
         type: String,
         required: true,
-        unique: true,
     },
     capacity: {
         type: Number,
@@ -16,5 +16,7 @@ const TableSchema = new mongoose.Schema({
         default: 'available',
     }
 }, { timestamps: true });
+
+TableSchema.index({ restaurant: 1, number: 1 }, { unique: true });
 
 export default mongoose.models.Table || mongoose.model('Table', TableSchema);

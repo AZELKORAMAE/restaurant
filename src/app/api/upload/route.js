@@ -1,34 +1,22 @@
-import { NextResponse } from 'next/server';
-import dbConnect from '@/lib/db';
-import Media from '@/models/Media';
+import { handler, ok, requireAccount, HttpError } from '@/lib/api';
+import { saveFile, guessContentType } from '@/lib/gridfs';
 
-export async function POST(request) {
-    try {
-        await dbConnect();
-        const formData = await request.formData();
-        const file = formData.get('file');
+const MAX = 25 * 1024 * 1024;
 
-        if (!file) {
-            return NextResponse.json({ success: false, message: 'No file uploaded' }, { status: 400 });
-        }
+// Single-request upload (photos). Large 3D files go through /api/upload/chunk.
+export const POST = handler(async (request) => {
+    const account = await requireAccount();
+    const formData = await request.formData();
+    const file = formData.get('file');
+    if (!file || typeof file === 'string') throw new HttpError(400, 'Aucun fichier.');
+    if (file.size > MAX) throw new HttpError(413, 'Fichier trop volumineux (25 Mo max).');
 
-        const bytes = await file.arrayBuffer();
-        const buffer = Buffer.from(bytes);
-
-        // Store in MongoDB
-        const media = await Media.create({
-            filename: file.name,
-            contentType: file.type,
-            data: buffer
-        });
-
-        // The URL will now point to our new media serving endpoint
-        return NextResponse.json({
-            success: true,
-            url: `/api/media/${media._id}`
-        });
-    } catch (error) {
-        console.error("Upload error:", error);
-        return NextResponse.json({ success: false, error: error.message }, { status: 500 });
-    }
-}
+    const contentType = file.type || guessContentType(file.name);
+    const id = await saveFile({
+        filename: file.name,
+        contentType,
+        data: Buffer.from(await file.arrayBuffer()),
+        metadata: { owner: account.id },
+    });
+    return ok({ url: `/api/media/${id}`, id });
+});

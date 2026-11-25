@@ -1,6 +1,7 @@
 "use client";
 import React, { useState } from 'react';
 import { signIn } from 'next-auth/react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ShieldCheck, Mail, Lock } from 'lucide-react';
 
@@ -22,13 +23,19 @@ export default function AdminLogin() {
             password,
         });
 
-        if (res?.ok) {
-            // Hard redirect to ensure middleware picks up the new session
-            window.location.href = '/admin/dashboard';
-        } else {
-            setError('Identifiants invalides. Veuillez réessayer.');
-            setLoading(false);
+        if (res?.ok && !res.error) {
+            // Hard redirect so the proxy picks up the new session; it sends each role to its space.
+            const session = await fetch('/api/auth/session').then(r => r.json()).catch(() => null);
+            window.location.href = session?.user?.role === 'superadmin' ? '/superadmin' : '/admin/dashboard';
+            return;
         }
+        const messages = {
+            pending: 'Votre demande est en cours de validation. Vous recevrez l’accès dès son approbation.',
+            rejected: 'Votre demande de création de compte a été refusée.',
+            suspended: 'Votre compte est suspendu. Contactez l’administrateur de la plateforme.',
+        };
+        setError(messages[res?.code] || 'Identifiants invalides. Veuillez réessayer.');
+        setLoading(false);
     };
 
     return (
@@ -61,8 +68,8 @@ export default function AdminLogin() {
                     <ShieldCheck size={32} />
                 </div>
 
-                <h1 style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>Espace Admin</h1>
-                <p style={{ color: 'var(--glovo-gray)', marginBottom: '2rem' }}>Connectez-vous pour gérer le restaurant</p>
+                <h1 style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>Espace restaurateur</h1>
+                <p style={{ color: 'var(--glovo-gray)', marginBottom: '2rem' }}>Connectez-vous pour gérer votre restaurant</p>
 
                 <form onSubmit={handleSubmit} style={{ textAlign: 'left' }}>
                     {error && (
@@ -129,6 +136,9 @@ export default function AdminLogin() {
                         {loading ? 'Connexion...' : 'Se Connecter'}
                     </button>
                 </form>
+                <p style={{ marginTop: '1.5rem', fontSize: '0.9rem', color: 'var(--glovo-gray)' }}>
+                    Pas encore de compte ? <Link href="/inscription" style={{ fontWeight: 700, color: 'var(--glovo-dark)' }}>Inscrire mon restaurant</Link>
+                </p>
             </div>
         </div>
     );

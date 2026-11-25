@@ -25,8 +25,8 @@ const permanentMarker = Permanent_Marker({
 });
 
 export const metadata = {
-  title: 'Gourmet - L’art de bien manger',
-  description: 'Découvrez une expérience culinaire d’exception, livrée chez vous.',
+  title: 'Menu3D – Menus de restaurant en 3D et réalité augmentée',
+  description: 'Scannez le QR code de votre table, découvrez le menu et posez les plats en 3D sur votre table avant de commander.',
 };
 
 export default function RootLayout({ children }) {

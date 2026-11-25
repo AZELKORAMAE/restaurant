@@ -1,284 +1,114 @@
-"use client";
-import { useState, useEffect } from 'react';
-import Header from '@/components/Header';
-import DishCard from '@/components/DishCard';
-import DishCustomizer from '@/components/DishCustomizer';
-import CartSidebar from '@/components/CartSidebar';
+import Link from 'next/link';
+import { redirect } from 'next/navigation';
+import { QrCode, Box, ScanLine, Store, ShieldCheck, Smartphone, ChefHat, Clock } from 'lucide-react';
+import dbConnect from '@/lib/db';
+import Restaurant from '@/models/Restaurant';
 
-export default function Home() {
-  const [dishes, setDishes] = useState([]);
-  const [collections, setCollections] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [cart, setCart] = useState([]);
-  const [isCartOpen, setIsCartOpen] = useState(false);
-  const [selectedDish, setSelectedDish] = useState(null);
-  const [selectedCollection, setSelectedCollection] = useState(null);
-  const [searchQuery, setSearchQuery] = useState('');
+export const dynamic = 'force-dynamic';
 
-  useEffect(() => {
-    // Detect table from URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const tableNum = urlParams.get('table');
-    if (tableNum) {
-      localStorage.setItem('tableNumber', tableNum);
-      console.log("Table detected and saved:", tableNum);
+async function getRestaurants() {
+    try {
+        await dbConnect();
+        return await Restaurant.find({ status: 'approved' }).select('name slug cuisine city logo coverImage').sort({ createdAt: -1 }).limit(12).lean();
+    } catch {
+        return [];
     }
+}
 
-    async function fetchData() {
-      try {
-        const [dishesRes, collsRes] = await Promise.all([
-          fetch('/api/dishes').then(res => res.json()),
-          fetch('/api/collections').then(res => res.json())
-        ]);
+const STEPS = [
+    { icon: Store, title: 'Demandez votre compte', text: 'Le gérant remplit la demande de création de son restaurant.' },
+    { icon: ShieldCheck, title: 'Validation', text: 'Notre équipe vérifie et approuve le restaurant.' },
+    { icon: ScanLine, title: 'Scannez vos plats', text: 'Photos, temps de préparation, ingrédients, prix, tailles… et un modèle 3D de chaque plat.' },
+    { icon: QrCode, title: 'QR code sur chaque table', text: 'Les clients scannent, voient le menu et posent les plats en 3D sur leur table.' },
+];
 
-        if (dishesRes.success) setDishes(dishesRes.data);
-        if (collsRes.success) setCollections(collsRes.data);
-      } catch (err) {
-        console.error("Failed to fetch data", err);
-      } finally {
-        setLoading(false);
-      }
+export default async function Home({ searchParams }) {
+    // Old table QR codes pointed to "/?table=N": send them to the original restaurant's menu.
+    const { table } = await searchParams;
+    if (table && process.env.DEFAULT_RESTAURANT_SLUG) {
+        redirect(`/r/${process.env.DEFAULT_RESTAURANT_SLUG}?table=${encodeURIComponent(table)}`);
     }
-    fetchData();
-  }, []);
+    const restaurants = await getRestaurants();
 
-  const handleAddToCart = (customizedDish) => {
-    setCart(prev => [...prev, customizedDish]);
-    setIsCartOpen(true);
-  };
-
-  const filteredDishes = dishes.filter(d => {
-    const matchesCollection = selectedCollection ? d.collection?._id === selectedCollection._id : true;
-    const matchesSearch = searchQuery
-      ? d.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      d.collection?.name.toLowerCase().includes(searchQuery.toLowerCase())
-      : true;
-    return matchesCollection && matchesSearch;
-  });
-
-  const filteredCollections = searchQuery
-    ? collections.filter(c => c.name.toLowerCase().includes(searchQuery.toLowerCase()))
-    : collections;
-
-  return (
-    <main style={{ backgroundColor: '#fdfdfd' }}>
-      <Header
-        cartCount={cart.length}
-        onCartClick={() => setIsCartOpen(true)}
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
-        dishes={dishes}
-        collections={collections}
-        onSelectDish={(dish) => {
-          setSelectedDish(dish);
-          setSearchQuery('');
-        }}
-        onSelectCollection={(coll) => {
-          setSelectedCollection(coll);
-          setSearchQuery('');
-        }}
-      />
-
-      {/* Hero Section */}
-      {!selectedCollection ? (
-        <section
-          className="hero-section"
-          style={{
-            position: 'relative',
-            padding: '10rem 0',
-            textAlign: 'center',
-            backgroundImage: 'linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.7)), url("https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&w=1920&q=80")',
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            backgroundColor: '#1a1a1a', // Fallback
-            color: 'white'
-          }}
-        >
-          <style>{`
-            @media (min-width: 769px) {
-              .hero-section {
-                background-attachment: fixed;
-              }
-            }
-          `}</style>
-          <div className="container" style={{ position: 'relative', zIndex: 1 }}>
-            <h1 style={{
-              fontSize: 'clamp(3rem, 10vw, 5.5rem)',
-              fontWeight: 900,
-              marginBottom: '1.5rem',
-              letterSpacing: '-0.03em',
-              fontFamily: 'var(--font-serif)',
-              animation: 'fadeInUp 1s ease-out',
-              padding: '0 1rem',
-              lineHeight: 1.1,
-              textShadow: '0 4px 30px rgba(0,0,0,0.3)'
-            }}>
-              <span className="font-marker">L'Art de Vivre</span> <br />
-              <span className="font-accent" style={{ color: 'var(--glovo-yellow)', fontSize: '1.2em' }}>
-                Gourmand
-              </span> 🍷
-            </h1>
-            <p className="font-marker" style={{
-              fontSize: 'clamp(1.1rem, 4vw, 1.5rem)',
-              opacity: 0.95,
-              maxWidth: '700px',
-              margin: '0 auto',
-              fontWeight: 400,
-              letterSpacing: '0.01em',
-              lineHeight: 1.6
-            }}>
-              Chaque plat raconte une histoire, chaque saveur un voyage sensoriel inoubliable.
-            </p>
-          </div>
-        </section>
-      ) : (
-        <section style={{
-          position: 'relative',
-          padding: '8rem 0',
-          textAlign: 'center',
-          backgroundImage: `linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url("${selectedCollection.image || 'https://images.unsplash.com/photo-1504674900247-0877df9cc836'}")`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          color: 'white',
-          transition: 'all 0.5s ease-in-out'
-        }}>
-          <div className="container" style={{ position: 'relative', zIndex: 1 }}>
-            <button
-              onClick={() => setSelectedCollection(null)}
-              style={{
-                color: 'white',
-                marginBottom: '2rem',
-                textDecoration: 'underline',
-                cursor: 'pointer',
-                background: 'none',
-                border: 'none',
-                fontSize: '1rem'
-              }}
-            >
-              ← Retour au menu complet
-            </button>
-            <h1 style={{ fontSize: '3.5rem', fontWeight: 900, marginBottom: '1rem' }}>{selectedCollection.name}</h1>
-            <p style={{ fontSize: '1.2rem', opacity: 0.8 }}>Découvrez nos délicieux {selectedCollection.name.toLowerCase()}</p>
-          </div>
-        </section>
-      )}
-
-      <div className="container" style={{ marginTop: '-4rem', position: 'relative', zIndex: 10, marginBottom: '8rem' }}>
-        {loading ? (
-          <div style={{ textAlign: 'center', padding: '10rem', fontSize: '1.2rem', background: 'white', borderRadius: '3rem', boxShadow: '0 20px 40px rgba(0,0,0,0.05)' }}>
-            Chargement de votre expérience gastronomique...
-          </div>
-        ) : (
-          <>
-            {/* Simple Collection List (One per line) */}
-            {!selectedCollection && (
-              <div style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '1.5rem',
-                marginBottom: '4rem',
-                padding: '0 1.5rem' // Consistent margins
-              }}>
-                {filteredCollections.map(c => (
-                  <div
-                    key={c._id}
-                    onClick={() => setSelectedCollection(c)}
-                    style={{
-                      position: 'relative',
-                      width: '100%',
-                      height: '160px', // Increased height
-                      borderRadius: '1.8rem',
-                      overflow: 'hidden',
-                      cursor: 'pointer',
-                      transition: 'all 0.3s ease',
-                      boxShadow: '0 4px 15px rgba(0,0,0,0.08)',
-                      opacity: c.isActive === false ? 0.7 : 1,
-                      filter: c.isActive === false ? 'grayscale(80%)' : 'none'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.transform = 'scale(1.01)';
-                      e.currentTarget.style.boxShadow = '0 10px 25px rgba(0,0,0,0.12)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.transform = 'scale(1)';
-                      e.currentTarget.style.boxShadow = '0 4px 15px rgba(0,0,0,0.08)';
-                    }}
-                  >
-                    <img src={c.image || 'https://via.placeholder.com/400'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    <div style={{
-                      position: 'absolute',
-                      inset: 0,
-                      background: 'linear-gradient(90deg, rgba(0,0,0,0.7) 0%, transparent 60%)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      padding: '0 2rem'
-                    }}>
-                      <div style={{ textAlign: 'left' }}>
-                        <span style={{
-                          color: 'white',
-                          fontSize: '1.2rem',
-                          fontWeight: 800,
-                          textShadow: '0 2px 4px rgba(0,0,0,0.3)'
-                        }}>{c.name}</span>
-                        {c.isActive === false && (
-                          <div style={{
-                            fontSize: '0.6rem',
-                            backgroundColor: '#ef4444',
-                            color: 'white',
-                            padding: '2px 6px',
-                            borderRadius: '4px',
-                            marginTop: '0.4rem',
-                            fontWeight: 900,
-                            display: 'inline-block'
-                          }}>INDISPONIBLE</div>
-                        )}
-                      </div>
+    return (
+        <main style={{ background: 'var(--glovo-light)' }}>
+            <section style={{ background: 'radial-gradient(circle at 80% 20%, #3a2a12 0%, #1a1a1a 55%)', color: 'white', padding: '1.2rem 0 5rem', overflow: 'hidden' }}>
+                <div className="container">
+                    <nav style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4rem', gap: '1rem' }}>
+                        <span style={{ fontWeight: 900, fontSize: '1.3rem', display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <Box size={24} color="var(--glovo-yellow)" /> Menu<span style={{ color: 'var(--glovo-yellow)' }}>3D</span>
+                        </span>
+                        <Link href="/admin/login" style={{ fontWeight: 700, fontSize: '0.9rem', opacity: 0.85 }}>Espace restaurateur</Link>
+                    </nav>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '3rem', alignItems: 'center' }}>
+                        <div>
+                            <h1 style={{ fontSize: 'clamp(2.4rem, 7vw, 4.2rem)', marginBottom: '1.5rem' }}>
+                                Voyez votre plat <span style={{ color: 'var(--glovo-yellow)' }}>sur votre table</span> avant de commander.
+                            </h1>
+                            <p style={{ fontSize: '1.15rem', opacity: 0.85, marginBottom: '2rem', maxWidth: 520 }}>
+                                Le menu digital en 3D et en réalité augmentée pour les restaurants. Scannez le QR code de la table, choisissez un plat, et posez-le devant vous avec la caméra de votre téléphone.
+                            </p>
+                            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                                <Link href="/scan" className="btn-primary"><QrCode size={20} /> Scanner ma table</Link>
+                                <Link href="/inscription" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0.9rem 1.6rem', borderRadius: 'var(--radius-xl)', border: '1px solid rgba(255,255,255,0.3)', fontWeight: 700 }}>
+                                    <ChefHat size={20} /> Inscrire mon restaurant
+                                </Link>
+                            </div>
+                        </div>
+                        <div aria-hidden style={{ position: 'relative', height: 360, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <div style={{ position: 'absolute', width: 300, height: 120, bottom: 40, borderRadius: '50%', background: 'radial-gradient(rgba(255,194,68,0.35), transparent 70%)' }} />
+                            <div style={{ width: 230, height: 360, borderRadius: 36, border: '8px solid #333', background: 'linear-gradient(#2b2b2b, #111)', boxShadow: '0 30px 60px rgba(0,0,0,0.5)', position: 'relative', overflow: 'hidden' }}>
+                                <img src="https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=70" alt="" style={{ position: 'absolute', left: '50%', top: '52%', width: 190, height: 190, objectFit: 'cover', borderRadius: '50%', transform: 'translate(-50%,-50%) perspective(400px) rotateX(55deg)', boxShadow: '0 25px 25px rgba(0,0,0,0.6)' }} />
+                                <span style={{ position: 'absolute', bottom: 18, left: '50%', transform: 'translateX(-50%)', background: 'white', color: '#111', fontWeight: 800, fontSize: 12, padding: '6px 12px', borderRadius: 20, whiteSpace: 'nowrap', display: 'flex', gap: 5, alignItems: 'center' }}>
+                                    <Smartphone size={13} /> Voir sur ma table
+                                </span>
+                            </div>
+                        </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                </div>
+            </section>
+
+            <section className="container" style={{ padding: '4rem 1rem' }}>
+                <h2 style={{ fontSize: '2rem', marginBottom: '2rem', textAlign: 'center' }}>Comment ça marche</h2>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.2rem' }}>
+                    {STEPS.map(({ icon: Icon, title, text }, i) => (
+                        <div key={title} className="card" style={{ padding: '1.5rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: '0.8rem' }}>
+                                <span style={{ width: 40, height: 40, borderRadius: 12, background: 'var(--glovo-yellow)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon size={20} /></span>
+                                <span style={{ fontWeight: 900, color: 'var(--glovo-gray)' }}>0{i + 1}</span>
+                            </div>
+                            <h3 style={{ fontSize: '1.15rem', marginBottom: '0.4rem' }}>{title}</h3>
+                            <p style={{ color: 'var(--glovo-gray)', fontSize: '0.92rem' }}>{text}</p>
+                        </div>
+                    ))}
+                </div>
+            </section>
+
+            {restaurants.length > 0 && (
+                <section className="container" style={{ padding: '0 1rem 5rem' }}>
+                    <h2 style={{ fontSize: '2rem', marginBottom: '2rem' }}>Les restaurants</h2>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '1.2rem' }}>
+                        {restaurants.map((r) => (
+                            <Link key={r.slug} href={`/r/${r.slug}`} className="card" style={{ display: 'block' }}>
+                                <div style={{ height: 130, background: r.coverImage ? `center/cover url("${r.coverImage}")` : 'linear-gradient(135deg,#1a1a1a,#555)' }} />
+                                <div style={{ padding: '1rem', display: 'flex', gap: 10, alignItems: 'center' }}>
+                                    {r.logo ? <img src={r.logo} alt="" style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover' }} /> : null}
+                                    <div>
+                                        <div style={{ fontWeight: 800 }}>{r.name}</div>
+                                        <div style={{ fontSize: '0.8rem', color: 'var(--glovo-gray)' }}>{[r.cuisine, r.city].filter(Boolean).join(' · ')}</div>
+                                    </div>
+                                </div>
+                            </Link>
+                        ))}
+                    </div>
+                </section>
             )}
 
-            {/* Dishes Grid */}
-            {/* Dish Grid with Same Margins */}
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-              gap: '2.5rem',
-              padding: '0 1.5rem' // Matching margins with collections
-            }}>
-              {filteredDishes.map(dish => (
-                <DishCard
-                  key={dish._id}
-                  dish={dish}
-                  onAdd={() => setSelectedDish(dish)}
-                />
-              ))}
-            </div>
-
-            {filteredDishes.length === 0 && !loading && (
-              <div style={{ textAlign: 'center', padding: '5rem', background: 'white', borderRadius: '2rem', boxShadow: '0 10px 30px rgba(0,0,0,0.05)' }}>
-                <p style={{ fontSize: '1.2rem', color: '#666' }}>Aucun plat disponible pour cette sélection.</p>
-              </div>
-            )}
-          </>
-        )}
-      </div>
-
-      {selectedDish && (
-        <DishCustomizer
-          dish={selectedDish}
-          onClose={() => setSelectedDish(null)}
-          onAddToCart={handleAddToCart}
-        />
-      )}
-
-      <CartSidebar
-        cart={cart}
-        isOpen={isCartOpen}
-        onClose={() => setIsCartOpen(false)}
-        onUpdateCart={(newCart) => setCart(newCart)}
-      />
-    </main>
-  );
+            <footer style={{ textAlign: 'center', padding: '2rem', color: 'var(--glovo-gray)', fontSize: '0.85rem', display: 'flex', justifyContent: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
+                <span><Clock size={13} style={{ verticalAlign: -2 }} /> Menu toujours à jour</span>
+                <Link href="/inscription">Inscrire mon restaurant</Link>
+                <Link href="/admin/login">Connexion</Link>
+            </footer>
+        </main>
+    );
 }

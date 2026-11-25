@@ -1,8 +1,9 @@
 "use client";
 import React from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, Box, Clock } from 'lucide-react';
 
-export default function DishCard({ dish, onAdd }) {
+export default function DishCard({ dish, onAdd, onView3D, currency = 'DH' }) {
+    const has3d = dish.model3d?.status === 'ready';
     const isInactive = dish.isActive === false;
 
     return (
@@ -40,6 +41,24 @@ export default function DishCard({ dish, onAdd }) {
                     }}
                     className="dish-image"
                 />
+                {has3d && !isInactive && (
+                    <button
+                        onClick={(e) => { e.stopPropagation(); onView3D?.(dish); }}
+                        aria-label={`Voir ${dish.name} en 3D sur ma table`}
+                        style={{
+                            position: 'absolute', left: '1rem', bottom: '1rem', zIndex: 2, display: 'flex', alignItems: 'center', gap: 6,
+                            background: 'rgba(26,26,26,0.88)', color: 'white', padding: '0.45rem 0.8rem', borderRadius: '2rem',
+                            fontWeight: 800, fontSize: '0.78rem', backdropFilter: 'blur(6px)'
+                        }}
+                    >
+                        <Box size={15} /> Voir en 3D sur ma table
+                    </button>
+                )}
+                {dish.prepTime ? (
+                    <div style={{ position: 'absolute', top: '1rem', left: '1rem', zIndex: 2, display: 'flex', alignItems: 'center', gap: 4, background: 'rgba(255,255,255,0.95)', padding: '0.3rem 0.6rem', borderRadius: '2rem', fontSize: '0.75rem', fontWeight: 700 }}>
+                        <Clock size={13} /> {dish.prepTime} min
+                    </div>
+                ) : null}
                 {isInactive && (
                     <div style={{
                         position: 'absolute',
@@ -79,7 +98,7 @@ export default function DishCard({ dish, onAdd }) {
                     zIndex: 2,
                     color: 'var(--glovo-dark)'
                 }}>
-                    {dish.price.toFixed(2)} DH
+                    {dish.price.toFixed(2)} {currency}
                 </div>
             </div>
 

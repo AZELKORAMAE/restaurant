@@ -1,8 +1,12 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { X, Minus, Plus, ShoppingBag } from 'lucide-react';
+import { X, Minus, Plus, ShoppingBag, Box, Image as ImageIcon, Clock, Flame, AlertTriangle } from 'lucide-react';
+import DishViewer3D from '@/components/ar/DishViewer3D';
 
-export default function DishCustomizer({ dish, onClose, onAddToCart }) {
+export default function DishCustomizer({ dish, onClose, onAddToCart, currency = 'DH', canOrder = true, initialView = 'photo' }) {
+    const has3d = dish.model3d?.status === 'ready' && dish.model3d?.glb;
+    const [view, setView] = useState(has3d && initialView === '3d' ? '3d' : 'photo');
+    const photos = [dish.image, ...(dish.images || [])].filter(Boolean);
     const [selectedSize, setSelectedSize] = useState(null);
     const [selectedSupplements, setSelectedSupplements] = useState([]);
     const [quantity, setQuantity] = useState(1);
@@ -103,37 +107,76 @@ export default function DishCustomizer({ dish, onClose, onAddToCart }) {
                     <X size={26} color="#1A1A1A" strokeWidth={3} />
                 </div>
 
-                {/* Header with Image */}
-                <div style={{ position: 'relative', height: '300px', backgroundColor: '#000', overflow: 'hidden' }}>
-                    {/* Blurred background layer to fill gaps */}
-                    <div style={{
-                        position: 'absolute',
-                        inset: '-20px',
-                        backgroundImage: `url("${dish.image}")`,
-                        backgroundSize: 'cover',
-                        backgroundPosition: 'center',
-                        filter: 'blur(20px) brightness(0.7)',
-                        opacity: 0.5,
-                        pointerEvents: 'none'
-                    }} />
-                    <img
-                        src={dish.image}
-                        alt={dish.name}
-                        style={{
-                            position: 'relative',
-                            width: '100%',
-                            height: '100%',
-                            objectFit: 'contain',
-                            zIndex: 1,
-                            filter: 'drop-shadow(0 0 30px rgba(0,0,0,0.8))',
-                            pointerEvents: 'none'
-                        }}
-                    />
+                {/* Media: photo gallery or 3D / AR */}
+                <div style={{ position: 'relative', flexShrink: 0 }}>
+                    {view === '3d' && has3d ? (
+                        <DishViewer3D model3d={dish.model3d} name={dish.name} poster={dish.image} height={340} />
+                    ) : (
+                        <div style={{ position: 'relative', height: '300px', backgroundColor: '#000', overflow: 'hidden' }}>
+                            <div style={{
+                                position: 'absolute', inset: '-20px', backgroundImage: `url("${dish.image}")`,
+                                backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(20px) brightness(0.7)',
+                                opacity: 0.5, pointerEvents: 'none'
+                            }} />
+                            <div style={{ position: 'relative', zIndex: 1, display: 'flex', height: '100%', overflowX: 'auto', scrollSnapType: 'x mandatory' }}>
+                                {photos.map((src, i) => (
+                                    <img key={src + i} src={src} alt={dish.name} style={{
+                                        flex: '0 0 100%', width: '100%', height: '100%', objectFit: 'contain', scrollSnapAlign: 'center',
+                                        filter: 'drop-shadow(0 0 30px rgba(0,0,0,0.8))'
+                                    }} />
+                                ))}
+                            </div>
+                            {photos.length > 1 && (
+                                <div style={{ position: 'absolute', bottom: 10, left: 0, right: 0, textAlign: 'center', zIndex: 2, color: 'white', fontSize: '0.75rem', fontWeight: 700, textShadow: '0 1px 4px rgba(0,0,0,0.6)' }}>
+                                    ← {photos.length} photos →
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {has3d && (
+                        <div style={{ position: 'absolute', top: '1.2rem', left: '1.2rem', zIndex: 5, display: 'flex', background: 'white', borderRadius: '2rem', padding: 4, boxShadow: '0 6px 20px rgba(0,0,0,0.25)' }}>
+                            {[['photo', <ImageIcon key="i" size={15} />, 'Photos'], ['3d', <Box key="b" size={15} />, '3D & AR']].map(([key, icon, label]) => (
+                                <button key={key} onClick={() => setView(key)} style={{
+                                    display: 'flex', alignItems: 'center', gap: 5, padding: '0.45rem 0.85rem', borderRadius: '2rem', fontWeight: 800, fontSize: '0.8rem',
+                                    background: view === key ? 'var(--glovo-dark)' : 'transparent', color: view === key ? 'white' : 'var(--glovo-dark)'
+                                }}>{icon}{label}</button>
+                            ))}
+                        </div>
+                    )}
                 </div>
 
                 <div style={{ padding: '2rem', overflowY: 'auto', flexGrow: 1 }}>
                     <h2 style={{ fontSize: '2rem', marginBottom: '0.5rem', fontFamily: 'var(--font-serif)' }}>{dish.name}</h2>
-                    <p style={{ color: 'var(--glovo-gray)', marginBottom: '2rem', lineHeight: 1.6 }}>{dish.description}</p>
+                    <p style={{ color: 'var(--glovo-gray)', marginBottom: '1.2rem', lineHeight: 1.6 }}>{dish.description}</p>
+
+                    {(dish.prepTime || dish.calories || dish.tags?.length > 0) && (
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1.5rem' }}>
+                            {dish.prepTime ? <span style={pill('#fff7ed', '#9a3412')}><Clock size={14} /> {dish.prepTime} min</span> : null}
+                            {dish.calories ? <span style={pill('#fef2f2', '#991b1b')}><Flame size={14} /> {dish.calories} kcal</span> : null}
+                            {(dish.tags || []).map(t => <span key={t} style={pill('#f0fdf4', '#166534')}>{t}</span>)}
+                        </div>
+                    )}
+
+                    {dish.ingredients?.length > 0 && (
+                        <div style={{ marginBottom: '1.5rem' }}>
+                            <h3 style={{ fontSize: '1.1rem', marginBottom: '0.7rem' }}>Ingrédients</h3>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+                                {dish.ingredients.map((ing, i) => (
+                                    <span key={i} style={pill('#f3f4f6', 'var(--glovo-dark)')}>
+                                        {ing.name}{ing.quantity ? <em style={{ fontStyle: 'normal', color: 'var(--glovo-gray)' }}> · {ing.quantity}</em> : null}
+                                    </span>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {dish.allergens?.length > 0 && (
+                        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start', background: '#fffbeb', color: '#92400e', padding: '0.8rem 1rem', borderRadius: '1rem', fontSize: '0.85rem', marginBottom: '2rem' }}>
+                            <AlertTriangle size={16} style={{ flexShrink: 0, marginTop: 2 }} />
+                            <span><strong>Allergènes :</strong> {dish.allergens.join(', ')}</span>
+                        </div>
+                    )}
 
                     {/* Sizes */}
                     {dish.sizes && dish.sizes.length > 0 && (
@@ -164,7 +207,7 @@ export default function DishCustomizer({ dish, onClose, onAddToCart }) {
                                             fontWeight: 700
                                         }}
                                     >
-                                        {size.name} (+{size.price}DH)
+                                        {size.name} (+{size.price}{currency})
                                     </button>
                                 ))}
                             </div>
@@ -215,7 +258,7 @@ export default function DishCustomizer({ dish, onClose, onAddToCart }) {
                                             </div>
                                             <div style={{ flexGrow: 1 }}>
                                                 <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>{sup.name}</div>
-                                                <div style={{ fontSize: '0.8rem', color: 'var(--glovo-gray)' }}>+{sup.price}DH</div>
+                                                <div style={{ fontSize: '0.8rem', color: 'var(--glovo-gray)' }}>+{sup.price}{currency}</div>
                                             </div>
                                             <input
                                                 type="checkbox"
@@ -266,11 +309,15 @@ export default function DishCustomizer({ dish, onClose, onAddToCart }) {
                         <ShoppingBag size={18} />
                         <span className="hide-mobile" style={{ marginLeft: '0.5rem' }}>Ajouter</span>
                         <span style={{ marginLeft: '0.5rem', borderLeft: '1px solid rgba(0,0,0,0.1)', paddingLeft: '0.5rem' }}>
-                            {totalPrice.toFixed(2)}DH
+                            {totalPrice.toFixed(2)}{currency}
                         </span>
                     </button>
                 </div>
             </div>
         </div>
     );
+}
+
+function pill(bg, color) {
+    return { display: 'inline-flex', alignItems: 'center', gap: 5, padding: '0.35rem 0.75rem', borderRadius: '1rem', background: bg, color, fontSize: '0.8rem', fontWeight: 700 };
 }

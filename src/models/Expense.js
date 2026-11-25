@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 
 const ExpenseSchema = new mongoose.Schema({
+    restaurant: { type: mongoose.Schema.Types.ObjectId, ref: 'Restaurant', index: true },
     description: {
         type: String,
         required: true,

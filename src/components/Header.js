@@ -3,7 +3,7 @@ import React from 'react';
 import Link from 'next/link';
 import { ShoppingCart, User, Search } from 'lucide-react';
 
-export default function Header({ cartCount = 0, onCartClick, searchQuery, setSearchQuery, dishes = [], collections = [], onSelectDish, onSelectCollection, selectedCollection }) {
+export default function Header({ restaurant = null, tableNumber = null, cartCount = 0, onCartClick, searchQuery, setSearchQuery, dishes = [], collections = [], onSelectDish, onSelectCollection, selectedCollection }) {
     const [showSuggestions, setShowSuggestions] = React.useState(false);
 
     const suggestions = searchQuery.length > 0 ? {
@@ -26,27 +26,35 @@ export default function Header({ cartCount = 0, onCartClick, searchQuery, setSea
                 justifyContent: 'space-between',
                 alignItems: 'center'
             }}>
-                <Link href="/" style={{
-                    fontSize: '1.2rem',
+                <Link href={restaurant ? `/r/${restaurant.slug}` : '/'} style={{
+                    fontSize: '1.1rem',
                     fontWeight: 900,
-                    color: 'var(--glovo-green)',
+                    color: 'var(--glovo-dark)',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '0.2rem',
-                    flexShrink: 0
+                    gap: '0.5rem',
+                    flexShrink: 0,
+                    maxWidth: '45%',
+                    minWidth: 0
                 }}>
-                    <span style={{ color: 'var(--glovo-yellow)' }}>GLOVO</span><span className="hide-mobile">MANGER</span>
-                    {typeof window !== 'undefined' && localStorage.getItem('tableNumber') && (
+                    {restaurant?.logo ? (
+                        <img src={restaurant.logo} alt="" style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
+                    ) : (
+                        <span style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--glovo-yellow)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                            {(restaurant?.name || 'M')[0].toUpperCase()}
+                        </span>
+                    )}
+                    <span className="hide-mobile" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: 'var(--font-serif)' }}>{restaurant?.name || 'Menu'}</span>
+                    {tableNumber && (
                         <span style={{
-                            marginLeft: '0.5rem',
                             fontSize: '0.7rem',
                             backgroundColor: 'var(--glovo-yellow)',
                             color: 'var(--glovo-dark)',
-                            padding: '0.2rem 0.4rem',
+                            padding: '0.2rem 0.5rem',
                             borderRadius: '1rem',
                             whiteSpace: 'nowrap'
                         }}>
-                            T{localStorage.getItem('tableNumber')}
+                            Table {tableNumber}
                         </span>
                     )}
                 </Link>
@@ -155,7 +163,7 @@ export default function Header({ cartCount = 0, onCartClick, searchQuery, setSea
                                                 <img src={d.image} style={{ width: '30px', height: '30px', borderRadius: '0.3rem', objectFit: 'cover', filter: d.isActive === false ? 'grayscale(100%)' : 'none' }} />
                                                 <div style={{ display: 'flex', flexDirection: 'column' }}>
                                                     <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>{d.name} {d.isActive === false && '(Hors ligne)'}</span>
-                                                    <span style={{ fontSize: '0.8rem', color: 'var(--glovo-green)', fontWeight: 700 }}>{d.price}DH</span>
+                                                    <span style={{ fontSize: '0.8rem', color: 'var(--glovo-green)', fontWeight: 700 }}>{d.price}{restaurant?.currency || 'DH'}</span>
                                                 </div>
                                             </div>
                                         ))}
@@ -301,20 +309,26 @@ export default function Header({ cartCount = 0, onCartClick, searchQuery, setSea
                                     width: 'auto'
                                 }}
                             >
+                                {cat.image ? (
                                 <img
-                                    src={cat.image}
-                                    alt={cat.name}
-                                    className="collection-icon"
-                                    style={{
-                                        width: '64px',
-                                        height: '64px',
-                                        borderRadius: '1rem',
-                                        objectFit: 'cover',
-                                        transition: 'all 0.2s',
-                                        boxShadow: isSelected ? '0 4px 15px rgba(0,0,0,0.15)' : '0 2px 8px rgba(0,0,0,0.05)',
-                                        border: isSelected ? '2px solid var(--glovo-yellow)' : 'none'
-                                    }}
-                                />
+                                        src={cat.image}
+                                        alt={cat.name}
+                                        className="collection-icon"
+                                        style={{
+                                            width: '64px',
+                                            height: '64px',
+                                            borderRadius: '1rem',
+                                            objectFit: 'cover',
+                                            transition: 'all 0.2s',
+                                            boxShadow: isSelected ? '0 4px 15px rgba(0,0,0,0.15)' : '0 2px 8px rgba(0,0,0,0.05)',
+                                            border: isSelected ? '2px solid var(--glovo-yellow)' : 'none'
+                                        }}
+                                    />
+                                ) : (
+                                    <div className="collection-icon" style={{ width: '64px', height: '64px', borderRadius: '1rem', background: isSelected ? 'var(--glovo-yellow)' : '#f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: '1.3rem', border: isSelected ? '2px solid var(--glovo-yellow)' : 'none' }}>
+                                        {cat.name[0]?.toUpperCase()}
+                                    </div>
+                                )}
                                 <span style={{ fontSize: '0.8rem', fontWeight: isSelected ? 800 : 700 }}>{cat.name}</span>
                                 {isInactive && (
                                     <div style={{

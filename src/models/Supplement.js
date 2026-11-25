@@ -1,10 +1,10 @@
 import mongoose from 'mongoose';
 
 const SupplementSchema = new mongoose.Schema({
+    restaurant: { type: mongoose.Schema.Types.ObjectId, ref: 'Restaurant', index: true },
     name: {
         type: String,
         required: [true, 'Please provide a name for this supplement.'],
-        unique: true
     },
     price: {
         type: Number,
@@ -16,5 +16,7 @@ const SupplementSchema = new mongoose.Schema({
         default: true
     }
 }, { timestamps: true });
+
+SupplementSchema.index({ restaurant: 1, name: 1 }, { unique: true });
 
 export default mongoose.models.Supplement || mongoose.model('Supplement', SupplementSchema);

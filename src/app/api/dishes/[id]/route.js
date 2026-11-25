@@ -1,28 +1,27 @@
-import { NextResponse } from 'next/server';
-import dbConnect from '@/lib/db';
+import { handler, ok, requireManager, assertId, HttpError } from '@/lib/api';
+import { normalizeDishInput } from '@/lib/dishes';
 import Dish from '@/models/Dish';
 
-export async function PATCH(request, { params }) {
-    try {
-        await dbConnect();
-        const { id } = await params;
-        const body = await request.json();
-        const dish = await Dish.findByIdAndUpdate(id, body, { new: true });
-        if (!dish) return NextResponse.json({ success: false, error: 'Dish not found' }, { status: 404 });
-        return NextResponse.json({ success: true, data: dish });
-    } catch (error) {
-        return NextResponse.json({ success: false, error: error.message }, { status: 400 });
-    }
-}
+export const PATCH = handler(async (request, { params }) => {
+    const { restaurantId, user } = await requireManager();
+    const { id } = await params;
+    assertId(id);
+    const current = await Dish.findOne({ _id: id, restaurant: restaurantId }).select('model3d.glb');
+    if (!current) throw new HttpError(404, 'Plat introuvable.');
+    const data = await normalizeDishInput(await request.json(), restaurantId, {
+        partial: true, owner: user._id.toString(), previousGlb: current.model3d?.glb,
+    });
+    const dish = await Dish.findOneAndUpdate({ _id: id, restaurant: restaurantId }, { $set: data }, { new: true, runValidators: true })
+        .populate('collection').populate('supplements');
+    if (!dish) throw new HttpError(404, 'Plat introuvable.');
+    return ok(dish);
+});
 
-export async function DELETE(request, { params }) {
-    try {
-        await dbConnect();
-        const { id } = await params;
-        const dish = await Dish.findByIdAndDelete(id);
-        if (!dish) return NextResponse.json({ success: false, error: 'Dish not found' }, { status: 404 });
-        return NextResponse.json({ success: true, message: 'Dish deleted successfully' });
-    } catch (error) {
-        return NextResponse.json({ success: false, error: error.message }, { status: 400 });
-    }
-}
+export const DELETE = handler(async (request, { params }) => {
+    const { restaurantId } = await requireManager();
+    const { id } = await params;
+    assertId(id);
+    const dish = await Dish.findOneAndDelete({ _id: id, restaurant: restaurantId });
+    if (!dish) throw new HttpError(404, 'Plat introuvable.');
+    return ok({ deleted: id });
+});

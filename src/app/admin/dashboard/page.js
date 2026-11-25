@@ -1,10 +1,11 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { LayoutDashboard, UtensilsCrossed, ShoppingBag, Bell, Plus, LogOut, Image as ImageIcon, X, Table2, Printer, Wallet, TrendingUp, TrendingDown, Calendar } from 'lucide-react';
+import { LayoutDashboard, UtensilsCrossed, ShoppingBag, Bell, Plus, LogOut, Image as ImageIcon, X, Table2, Printer, Wallet, TrendingUp, TrendingDown, Calendar, Store, Box, Clock, ExternalLink } from 'lucide-react';
 import QRCode from 'react-qr-code';
 import { signOut } from 'next-auth/react';
 
 import DishForm from '@/components/admin/DishForm';
+import RestaurantSettings from '@/components/admin/RestaurantSettings';
 import CollectionForm from '@/components/admin/CollectionForm';
 import SupplementForm from '@/components/admin/SupplementForm';
 import ExpenseForm from '@/components/admin/ExpenseForm';
@@ -12,6 +13,8 @@ import { useRef } from 'react';
 
 export default function AdminDashboard() {
     const [activeTab, setActiveTab] = useState('orders');
+    const [restaurant, setRestaurant] = useState(null);
+    const [features, setFeatures] = useState({});
     const [orders, setOrders] = useState([]);
     const [dishes, setDishes] = useState([]);
     const [collections, setCollections] = useState([]);
@@ -72,6 +75,15 @@ export default function AdminDashboard() {
         setTables(tablesRes.data || []);
         setExpenses(expensesRes.data || []);
     };
+
+    useEffect(() => {
+        fetch('/api/restaurant').then(res => res.json()).then(json => {
+            if (json.success) {
+                setRestaurant(json.data.restaurant);
+                setFeatures(json.data.features || {});
+            }
+        });
+    }, []);
 
     useEffect(() => {
         // Fetch data for dashboard
@@ -283,15 +295,17 @@ export default function AdminDashboard() {
                         }
                         .container { text-align: center; border: 2px solid #000; padding: 40px; border-radius: 20px; }
                         h1 { font-size: 48px; margin-bottom: 20px; }
+                        h2 { font-size: 22px; margin: 0 0 8px; letter-spacing: 2px; text-transform: uppercase; }
                         p { font-size: 24px; color: #666; }
                         svg { width: 300px; height: 300px; }
                     </style>
                 </head>
                 <body>
                     <div class="container">
+                        <h2>${(restaurant?.name || '').replace(/</g, '&lt;')}</h2>
                         <h1>TABLE ${tableNumber}</h1>
                         <div>${qrSvg}</div>
-                        <p>Scannez pour commander</p>
+                        <p>Scannez pour voir le menu<br/>et nos plats en 3D sur votre table</p>
                     </div>
                     <script>
                         window.onload = () => {
@@ -441,7 +455,7 @@ export default function AdminDashboard() {
     const financeData = getFinanceData();
 
     return (
-        <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#f9fafb' }}>
+        <div className="admin-layout" style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#f9fafb' }}>
             {/* Audio for notifications */}
             <audio ref={audioRef} src="/notification.mp3" preload="auto" />
 
@@ -452,6 +466,8 @@ export default function AdminDashboard() {
                     collections={collections}
                     availableSupplements={supplements}
                     initialData={editingDish}
+                    aiEnabled={features.aiReconstruction}
+                    currency={restaurant?.currency || 'DH'}
                 />
             )}
             {(showCollectionForm || editingCollection) && (
@@ -478,7 +494,7 @@ export default function AdminDashboard() {
                 )
             }
             {/* Sidebar */}
-            <aside style={{
+            <aside className="admin-sidebar" style={{
                 width: '260px',
                 backgroundColor: 'var(--glovo-dark)',
                 color: 'white',
@@ -493,7 +509,12 @@ export default function AdminDashboard() {
                     marginBottom: '3rem',
                     padding: '0 1rem'
                 }}>
-                    ADMIN PANELS
+                    {restaurant?.name || 'ADMIN PANEL'}
+                    {restaurant && (
+                        <a href={`/r/${restaurant.slug}`} target="_blank" rel="noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.75rem', color: '#9ca3af', fontWeight: 600, marginTop: 4 }}>
+                            <ExternalLink size={12} /> Voir mon menu
+                        </a>
+                    )}
                 </div>
 
                 <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flexGrow: 1 }}>
@@ -588,6 +609,22 @@ export default function AdminDashboard() {
                     </button>
 
                     <button
+                        onClick={() => setActiveTab('restaurant')}
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '1rem',
+                            padding: '1rem',
+                            borderRadius: '0.5rem',
+                            color: activeTab === 'restaurant' ? 'var(--glovo-dark)' : 'white',
+                            backgroundColor: activeTab === 'restaurant' ? 'var(--glovo-yellow)' : 'transparent',
+                            fontWeight: 600
+                        }}
+                    >
+                        <Store size={20} />
+                        Mon restaurant
+                    </button>
+                    <button
                         onClick={() => setActiveTab('finance')}
                         style={{
                             display: 'flex',
@@ -622,14 +659,16 @@ export default function AdminDashboard() {
             </aside>
 
             {/* Main Content */}
-            <main style={{ flexGrow: 1, padding: '2rem' }}>
-                <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+            <main className="admin-main" style={{ flexGrow: 1, padding: '2rem', minWidth: 0 }}>
+                <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', gap: '1rem', flexWrap: 'wrap' }}>
                     <h1 style={{ fontSize: '1.8rem', fontWeight: 700 }}>
                         {activeTab === 'orders' && 'Gestion des Commandes'}
                         {activeTab === 'dishes' && 'Gestion du Menu'}
                         {activeTab === 'collections' && 'Gestion des Collections'}
                         {activeTab === 'supplements' && 'Gestion des Suppléments'}
                         {activeTab === 'tables' && 'Gestion des Tables'}
+                        {activeTab === 'finance' && 'Finance'}
+                        {activeTab === 'restaurant' && 'Mon restaurant'}
                     </h1>
 
                     {activeTab === 'dishes' && (
@@ -815,7 +854,17 @@ export default function AdminDashboard() {
                                 <div key={dish._id} className="card" style={{ padding: '1rem' }}>
                                     <img src={dish.image} alt={dish.name} style={{ width: '100%', height: '150px', objectFit: 'cover', borderRadius: 'var(--radius-lg)', marginBottom: '1rem' }} />
                                     <h3 style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>{dish.name}</h3>
-                                    <p style={{ color: 'var(--glovo-gray)', fontSize: '0.9rem', marginBottom: '1rem' }}>{dish.price}DH</p>
+                                    <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', alignItems: 'center', marginBottom: '1rem' }}>
+                                        <span style={{ color: 'var(--glovo-gray)', fontSize: '0.9rem', marginRight: 'auto' }}>{dish.price}{restaurant?.currency || 'DH'}</span>
+                                        {dish.prepTime ? <span style={{ fontSize: '0.7rem', fontWeight: 700, background: '#f3f4f6', padding: '0.2rem 0.5rem', borderRadius: '1rem', display: 'flex', gap: 3, alignItems: 'center' }}><Clock size={11} /> {dish.prepTime} min</span> : null}
+                                        <span style={{
+                                            fontSize: '0.7rem', fontWeight: 800, padding: '0.2rem 0.5rem', borderRadius: '1rem', display: 'flex', gap: 3, alignItems: 'center',
+                                            background: dish.model3d?.status === 'ready' ? '#ede9fe' : dish.model3d?.status === 'processing' ? '#fef3c7' : '#f3f4f6',
+                                            color: dish.model3d?.status === 'ready' ? '#6d28d9' : dish.model3d?.status === 'processing' ? '#92400e' : '#9ca3af',
+                                        }}>
+                                            <Box size={11} /> {dish.model3d?.status === 'ready' ? '3D' : dish.model3d?.status === 'processing' ? '3D en cours' : 'Pas de 3D'}
+                                        </span>
+                                    </div>
                                     {dish.supplements && dish.supplements.length > 0 && (
                                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1rem' }}>
                                             {dish.supplements.map(s => (
@@ -1056,6 +1105,10 @@ export default function AdminDashboard() {
                     </div>
                 )}
 
+                {activeTab === 'restaurant' && restaurant && (
+                    <RestaurantSettings restaurant={restaurant} dishes={dishes} onSaved={setRestaurant} />
+                )}
+
                 {activeTab === 'tables' && (
                     <div>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.5rem' }}>
@@ -1073,7 +1126,7 @@ export default function AdminDashboard() {
                                         boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
                                     }}>
                                         <QRCode
-                                            value={`${typeof window !== 'undefined' ? window.location.origin : ''}/?table=${table.number}`}
+                                            value={`${typeof window !== 'undefined' ? window.location.origin : ''}/r/${restaurant?.slug || ''}?table=${encodeURIComponent(table.number)}`}
                                             size={150}
                                         />
                                     </div>

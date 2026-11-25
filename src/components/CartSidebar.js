@@ -2,7 +2,8 @@
 import React, { useState } from 'react';
 import { X, ShoppingBag, Trash2, ChevronRight, CheckCircle } from 'lucide-react';
 
-export default function CartSidebar({ cart = [], isOpen, onClose, onUpdateCart }) {
+export default function CartSidebar({ cart = [], isOpen, onClose, onUpdateCart, restaurant, tableNumber = null }) {
+    const currency = restaurant?.currency || 'DH';
     const [isCheckout, setIsCheckout] = useState(false);
     const [isOrdered, setIsOrdered] = useState(false);
     const [customerInfo, setCustomerInfo] = useState({
@@ -10,7 +11,6 @@ export default function CartSidebar({ cart = [], isOpen, onClose, onUpdateCart }
         address: '',
         phone: ''
     });
-    const tableNumber = typeof window !== 'undefined' ? localStorage.getItem('tableNumber') : null;
 
     const total = cart.reduce((sum, item) => sum + item.finalPrice, 0);
 
@@ -32,6 +32,7 @@ export default function CartSidebar({ cart = [], isOpen, onClose, onUpdateCart }
         }
 
         const orderData = {
+            restaurant: restaurant?.slug,
             items: cart.map(item => ({
                 dish: item._id,
                 name: item.name,
@@ -118,7 +119,7 @@ export default function CartSidebar({ cart = [], isOpen, onClose, onUpdateCart }
                                             {item.selectedSize ? `Taille: ${item.selectedSize.name}` : 'Taille Standard'}
                                             {item.selectedSupplements.length > 0 && ` • +${item.selectedSupplements.map(s => s.name).join(', ')}`}
                                         </div>
-                                        <div style={{ fontWeight: 700, color: 'var(--glovo-dark)' }}>{item.finalPrice.toFixed(2)}DH</div>
+                                        <div style={{ fontWeight: 700, color: 'var(--glovo-dark)' }}>{item.finalPrice.toFixed(2)}{currency}</div>
                                     </div>
                                     <button onClick={() => removeItem(i)} style={{ alignSelf: 'center', color: '#ef4444' }}><Trash2 size={20} /></button>
                                 </div>
@@ -170,7 +171,7 @@ export default function CartSidebar({ cart = [], isOpen, onClose, onUpdateCart }
                     <div style={{ padding: '2rem', borderTop: '1px solid #eee', background: '#fdfdfd' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
                             <span style={{ fontSize: '1.1rem', color: 'var(--glovo-gray)' }}>Total</span>
-                            <span style={{ fontSize: '1.5rem', fontWeight: 900 }}>{total.toFixed(2)}DH</span>
+                            <span style={{ fontSize: '1.5rem', fontWeight: 900 }}>{total.toFixed(2)}{currency}</span>
                         </div>
 
                         {!isCheckout ? (

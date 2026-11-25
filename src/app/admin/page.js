@@ -4,9 +4,6 @@ import { auth } from "@/auth";
 export default async function AdminPage() {
     const session = await auth();
 
-    if (!session) {
-        redirect('/admin/login');
-    } else {
-        redirect('/admin/dashboard');
-    }
+    if (!session) redirect('/admin/login');
+    redirect(session.user?.role === 'superadmin' ? '/superadmin' : '/admin/dashboard');
 }
