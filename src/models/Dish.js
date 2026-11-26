@@ -52,7 +52,6 @@ const DishSchema = new mongoose.Schema({
     collection: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Collection',
-        required: [true, 'Please provide a collection.'],
     },
     sizes: [
         {

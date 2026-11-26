@@ -35,9 +35,9 @@ export default function CollectionForm({ onSave, onCancel, initialData = null })
             });
             const json = await res.json();
             if (json.success) {
-                setFormData(prev => ({ ...prev, image: json.url }));
+                setFormData(prev => ({ ...prev, image: json.data.url }));
             } else {
-                alert("Erreur d'upload: " + (json.message || "Serveur non disponible"));
+                alert("Erreur d'upload : " + (json.error || "Serveur non disponible"));
             }
         } catch (err) {
             alert("Erreur réseau lors de l'upload. Vérifiez votre connexion.");

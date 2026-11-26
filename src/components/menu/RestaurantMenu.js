@@ -60,7 +60,7 @@ export default function RestaurantMenu({ slug }) {
     const matchesCollection = selectedCollection ? d.collection?._id === selectedCollection._id : true;
     const matchesSearch = searchQuery
       ? d.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      d.collection?.name.toLowerCase().includes(searchQuery.toLowerCase())
+      d.collection?.name?.toLowerCase().includes(searchQuery.toLowerCase())
       : true;
     return matchesCollection && matchesSearch;
   });

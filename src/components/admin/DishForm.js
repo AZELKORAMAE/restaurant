@@ -97,7 +97,6 @@ export default function DishForm({ onSave, onCancel, collections = [], available
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!formData.collection) return alert("Veuillez sélectionner une collection");
         if (!formData.image) return alert("Veuillez ajouter une photo du plat");
         setSaving(true);
         try {
@@ -138,8 +137,8 @@ export default function DishForm({ onSave, onCancel, collections = [], available
                     <div style={grid2}>
                         <div>
                             <label style={label}>Collection</label>
-                            <select value={formData.collection} required onChange={(e) => update({ collection: e.target.value })} style={input}>
-                                <option value="">Sélectionner une collection</option>
+                            <select value={formData.collection} onChange={(e) => update({ collection: e.target.value })} style={input}>
+                                <option value="">Aucune collection</option>
                                 {collections.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
                             </select>
                         </div>
