@@ -11,7 +11,13 @@ const nextConfig = {
   ],
   // ...and make sure their binary files are deployed with the API routes (Vercel)
   outputFileTracingIncludes: {
-    '/api/**/*': ['./node_modules/draco3dgltf/**/*', './node_modules/meshoptimizer/**/*'],
+    '/api/**/*': [
+      './node_modules/draco3dgltf/**/*',
+      './node_modules/meshoptimizer/**/*',
+      // sharp charge sa bibliothèque libvips (.so) au démarrage : Next ne la détecte pas toute seule
+      './node_modules/sharp/**/*',
+      './node_modules/@img/**/*',
+    ],
   },
 };
 
