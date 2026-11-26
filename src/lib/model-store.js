@@ -20,7 +20,8 @@ export async function processBuffer(buffer, settings, { owner, name = 'plat' } =
         result = await processModel(buffer, settings);
     } catch (e) {
         const invalid = /Invalid|magic|JSON|glTF|header/i.test(e.message);
-        throw new HttpError(400, invalid ? 'Ce fichier n’est pas un modèle GLB valide.' : e.message);
+        console.error('[3D] traitement du modèle impossible :', e);
+        throw new HttpError(400, invalid ? `Ce fichier n’est pas un modèle GLB valide (${e.message}).` : e.message);
     }
     const fileId = await saveFile({
         filename: `${name}.glb`,
