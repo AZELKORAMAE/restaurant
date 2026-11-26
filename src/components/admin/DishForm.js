@@ -22,7 +22,7 @@ function Chip({ active, onClick, children }) {
     );
 }
 
-export default function DishForm({ onSave, onCancel, collections = [], availableSupplements = [], initialData = null, aiEnabled = false, currency = 'DH' }) {
+export default function DishForm({ onSave, onCancel, collections = [], availableSupplements = [], initialData = null, features = {}, canAutoScan = false, currency = 'DH' }) {
     const [formData, setFormData] = useState(() => ({
         name: '',
         description: '',
@@ -196,8 +196,9 @@ export default function DishForm({ onSave, onCancel, collections = [], available
                         dishId={initialData?._id}
                         model3d={formData.model3d}
                         photo={formData.image}
-                        aiEnabled={aiEnabled}
-                        onChange={(model3d) => setFormData(prev => ({ ...prev, model3d }))}
+                        features={features}
+                        canAutoScan={canAutoScan}
+                        onChange={(next) => setFormData(prev => ({ ...prev, model3d: typeof next === 'function' ? next(prev.model3d) : next }))}
                     />
 
                     {/* Ingredients */}

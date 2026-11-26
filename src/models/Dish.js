@@ -1,16 +1,28 @@
 import mongoose from 'mongoose';
 
 const Model3DSchema = new mongoose.Schema({
-    // "none" | "processing" (AI reconstruction running) | "ready" | "failed"
+    // "none" | "processing" (automatic reconstruction running) | "ready" | "failed"
     status: { type: String, enum: ['none', 'processing', 'ready', 'failed'], default: 'none' },
-    // "scan" = imported from a scanning app (Polycam, KIRI, Scaniverse, Object Capture…)
-    // "ai" = reconstructed from the captured photos, "plate" = generated preview from the dish photo
+    // "scan" = real scan (photogrammetry or imported scanning-app file), "ai" = AI reconstruction,
+    // "plate" = quick preview generated from the dish photo
     source: { type: String, enum: ['scan', 'ai', 'plate', null], default: null },
-    glb: String,          // /api/media/<id> (Android / Web / WebXR)
+    provider: { type: String, enum: ['kiri', 'meshy', null], default: null },
+    glb: String,          // processed model shown to customers (real size, cleaned, optimised)
+    originalGlb: String,  // untouched source, so the studio can always start over
     usdz: String,         // optional, iOS Quick Look (model-viewer generates one from the GLB otherwise)
-    poster: String,       // preview image shown while the model loads
+    poster: String,       // rendered preview shown while the model loads
     captureImages: [String], // photos taken around the dish with the guided capture
-    realDiameterCm: { type: Number, default: 26 }, // real plate size, used to scale the model in AR
+    realDiameterCm: { type: Number, default: 26 },
+    // Studio settings used to produce `glb` from `originalGlb`
+    reference: {
+        axis: { type: String, enum: ['width', 'height', 'keep'], default: 'width' },
+        cm: Number,
+    },
+    rotation: { type: [Number], default: undefined },
+    crop: { radiusCm: Number, bottomCm: Number, topCm: Number },
+    quality: { type: String, enum: ['light', 'balanced', 'ultra'], default: 'balanced' },
+    dimensions: { widthCm: Number, depthCm: Number, heightCm: Number },
+    triangles: Number,
     taskId: String,
     progress: Number,
     error: String,

@@ -4,8 +4,9 @@ export default auth((req) => {
     const { pathname, origin } = req.nextUrl;
     const role = req.auth?.user?.role;
 
-    if (pathname.startsWith("/admin/dashboard") && role !== "manager") {
-        return Response.redirect(new URL(role === "superadmin" ? "/superadmin" : "/admin/login", origin));
+    // The super-admin can open any restaurant's dashboard ("Gérer" in the admin space).
+    if (pathname.startsWith("/admin/dashboard") && role !== "manager" && role !== "superadmin") {
+        return Response.redirect(new URL("/admin/login", origin));
     }
 
     if (pathname.startsWith("/superadmin") && role !== "superadmin") {

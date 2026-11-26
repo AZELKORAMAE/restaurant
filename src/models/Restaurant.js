@@ -17,6 +17,19 @@ const RestaurantSchema = new mongoose.Schema({
     reviewNote: String,
     reviewedAt: Date,
     acceptsOrders: { type: Boolean, default: true },
+    // Subscription
+    plan: { type: String, enum: ['essentiel', 'pro', 'premium'], default: 'pro' },
+    trialEndsAt: Date,
+    paidUntil: Date,
+    // Restrictions set by the super-admin (on top of the plan)
+    restrictions: {
+        readOnly: { type: Boolean, default: false },
+        ordersDisabled: { type: Boolean, default: false },
+        threeDDisabled: { type: Boolean, default: false },
+        maxDishes: { type: Number, default: null },
+        note: String,
+    },
+    accessSentAt: Date,
 }, { timestamps: true });
 
 export default mongoose.models.Restaurant || mongoose.model('Restaurant', RestaurantSchema);

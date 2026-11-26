@@ -8,8 +8,8 @@ import Table from '@/models/Table';
 // never trusted from the browser.
 export const POST = handler(async (request) => {
     const body = await request.json();
-    const restaurant = await findPublicRestaurant(body.restaurant);
-    if (!restaurant.acceptsOrders) throw new HttpError(403, 'Ce restaurant ne prend pas de commandes en ligne.');
+    const { restaurant, access } = await findPublicRestaurant(body.restaurant);
+    if (!access.canOrder) throw new HttpError(403, 'Ce restaurant ne prend pas de commandes en ligne pour le moment.');
 
     const rawItems = Array.isArray(body.items) ? body.items.slice(0, 50) : [];
     if (!rawItems.length) throw new HttpError(400, 'Panier vide.');

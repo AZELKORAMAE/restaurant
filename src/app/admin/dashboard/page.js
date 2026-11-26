@@ -1,11 +1,12 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { LayoutDashboard, UtensilsCrossed, ShoppingBag, Bell, Plus, LogOut, Image as ImageIcon, X, Table2, Printer, Wallet, TrendingUp, TrendingDown, Calendar, Store, Box, Clock, ExternalLink } from 'lucide-react';
+import { LayoutDashboard, UtensilsCrossed, ShoppingBag, Bell, Plus, LogOut, Image as ImageIcon, X, Table2, Printer, Wallet, TrendingUp, TrendingDown, Calendar, Store, Box, Clock, ExternalLink, Crown, ShieldCheck, Lock, AlertTriangle } from 'lucide-react';
 import QRCode from 'react-qr-code';
 import { signOut } from 'next-auth/react';
 
 import DishForm from '@/components/admin/DishForm';
 import RestaurantSettings from '@/components/admin/RestaurantSettings';
+import SubscriptionPanel from '@/components/admin/SubscriptionPanel';
 import CollectionForm from '@/components/admin/CollectionForm';
 import SupplementForm from '@/components/admin/SupplementForm';
 import ExpenseForm from '@/components/admin/ExpenseForm';
@@ -15,6 +16,9 @@ export default function AdminDashboard() {
     const [activeTab, setActiveTab] = useState('orders');
     const [restaurant, setRestaurant] = useState(null);
     const [features, setFeatures] = useState({});
+    const [access, setAccess] = useState(null);
+    const [actingAdmin, setActingAdmin] = useState(false);
+    const [infoVersion, setInfoVersion] = useState(0);
     const [orders, setOrders] = useState([]);
     const [dishes, setDishes] = useState([]);
     const [collections, setCollections] = useState([]);
@@ -81,9 +85,22 @@ export default function AdminDashboard() {
             if (json.success) {
                 setRestaurant(json.data.restaurant);
                 setFeatures(json.data.features || {});
+                setAccess(json.data.access);
+                setActingAdmin(json.data.actingAdmin);
+                // Expired subscription: only the subscription page is useful
+                if (!json.data.access?.live && !json.data.actingAdmin && infoVersion === 0) setActiveTab('subscription');
+            } else if (json.error) {
+                window.location.href = '/admin/login';
             }
         });
-    }, []);
+    }, [infoVersion]);
+
+    const leaveAdminMode = async () => {
+        await fetch('/api/superadmin/act-as', { method: 'DELETE' });
+        window.location.href = '/superadmin';
+    };
+    const locked = access && !access.canEdit && !actingAdmin;
+    const LOCKABLE = ['dishes', 'collections', 'supplements', 'tables', 'restaurant'];
 
     useEffect(() => {
         // Fetch data for dashboard
@@ -466,7 +483,8 @@ export default function AdminDashboard() {
                     collections={collections}
                     availableSupplements={supplements}
                     initialData={editingDish}
-                    aiEnabled={features.aiReconstruction}
+                    features={features}
+                    canAutoScan={Boolean(access?.canAutoScan)}
                     currency={restaurant?.currency || 'DH'}
                 />
             )}
@@ -625,6 +643,23 @@ export default function AdminDashboard() {
                         Mon restaurant
                     </button>
                     <button
+                        onClick={() => setActiveTab('subscription')}
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '1rem',
+                            padding: '1rem',
+                            borderRadius: '0.5rem',
+                            color: activeTab === 'subscription' ? 'var(--glovo-dark)' : 'white',
+                            backgroundColor: activeTab === 'subscription' ? 'var(--glovo-yellow)' : 'transparent',
+                            fontWeight: 600
+                        }}
+                    >
+                        <Crown size={20} />
+                        Abonnement
+                        {access?.subscription?.warn && <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#ef4444', marginLeft: 'auto' }} />}
+                    </button>
+                    <button
                         onClick={() => setActiveTab('finance')}
                         style={{
                             display: 'flex',
@@ -660,6 +695,27 @@ export default function AdminDashboard() {
 
             {/* Main Content */}
             <main className="admin-main" style={{ flexGrow: 1, padding: '2rem', minWidth: 0 }}>
+                {actingAdmin && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', flexWrap: 'wrap', background: '#1a1a1a', color: 'white', padding: '0.8rem 1rem', borderRadius: '1rem', marginBottom: '1.2rem' }}>
+                        <ShieldCheck size={20} color="var(--glovo-yellow)" />
+                        <span style={{ flex: 1 }}>Mode administrateur : vous gérez <strong>{restaurant?.name}</strong> avec l’interface du gérant.</span>
+                        <button onClick={leaveAdminMode} style={{ background: 'var(--glovo-yellow)', color: '#1a1a1a', fontWeight: 800, padding: '0.5rem 1rem', borderRadius: '0.7rem' }}>Retour à l’administration</button>
+                    </div>
+                )}
+                {access?.subscription?.warn && !actingAdmin && activeTab !== 'subscription' && (
+                    <div style={{
+                        display: 'flex', alignItems: 'center', gap: '0.8rem', flexWrap: 'wrap', padding: '0.8rem 1rem', borderRadius: '1rem', marginBottom: '1.2rem',
+                        background: access.subscription.state === 'expired' ? '#fee2e2' : '#fffbeb', color: access.subscription.state === 'expired' ? '#991b1b' : '#92400e',
+                    }}>
+                        <AlertTriangle size={20} />
+                        <span style={{ flex: 1, fontWeight: 600 }}>
+                            {access.subscription.state === 'expired' ? 'Votre abonnement a expiré : votre menu est hors ligne.'
+                                : access.subscription.state === 'grace' ? `Abonnement expiré — votre menu sera suspendu dans ${access.subscription.graceDaysLeft} jour(s).`
+                                    : `Votre ${access.subscription.state === 'trial' ? 'essai' : 'abonnement'} se termine dans ${access.subscription.daysLeft} jour(s).`}
+                        </span>
+                        <button onClick={() => setActiveTab('subscription')} style={{ background: '#1a1a1a', color: 'white', fontWeight: 700, padding: '0.5rem 1rem', borderRadius: '0.7rem' }}>Renouveler</button>
+                    </div>
+                )}
                 <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', gap: '1rem', flexWrap: 'wrap' }}>
                     <h1 style={{ fontSize: '1.8rem', fontWeight: 700 }}>
                         {activeTab === 'orders' && 'Gestion des Commandes'}
@@ -669,24 +725,32 @@ export default function AdminDashboard() {
                         {activeTab === 'tables' && 'Gestion des Tables'}
                         {activeTab === 'finance' && 'Finance'}
                         {activeTab === 'restaurant' && 'Mon restaurant'}
+                        {activeTab === 'subscription' && 'Abonnement'}
                     </h1>
 
-                    {activeTab === 'dishes' && (
-                        <button className="btn-primary" onClick={() => setShowDishForm(true)}>
-                            <Plus size={20} /> Nouveau Plat
-                        </button>
+                    {activeTab === 'dishes' && !locked && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', flexWrap: 'wrap' }}>
+                            {access && (access.maxDishes != null || access.max3d != null) && (
+                                <span style={{ fontSize: '0.8rem', color: 'var(--glovo-gray)', fontWeight: 600 }}>
+                                    {dishes.length}{access.maxDishes != null ? `/${access.maxDishes}` : ''} plats · {dishes.filter(d => d.model3d?.status === 'ready').length}{access.max3d != null ? `/${access.max3d}` : ''} en 3D
+                                </span>
+                            )}
+                            <button className="btn-primary" onClick={() => setShowDishForm(true)}>
+                                <Plus size={20} /> Nouveau Plat
+                            </button>
+                        </div>
                     )}
-                    {activeTab === 'collections' && (
+                    {activeTab === 'collections' && !locked && (
                         <button className="btn-primary" onClick={() => setShowCollectionForm(true)}>
                             <Plus size={20} /> Nouvelle Collection
                         </button>
                     )}
-                    {activeTab === 'supplements' && (
+                    {activeTab === 'supplements' && !locked && (
                         <button className="btn-primary" onClick={() => setShowSupplementForm(true)}>
                             <Plus size={20} /> Nouveau Supplément
                         </button>
                     )}
-                    {activeTab === 'tables' && (
+                    {activeTab === 'tables' && !locked && (
                         <button className="btn-primary" onClick={() => setShowTableForm(true)}>
                             <Plus size={20} /> Nouvelle Table
                         </button>
@@ -846,7 +910,7 @@ export default function AdminDashboard() {
                     </>
                 )}
 
-                {activeTab === 'dishes' && (
+                {activeTab === 'dishes' && !locked && (
                     <div>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '1.5rem' }}>
 
@@ -919,7 +983,7 @@ export default function AdminDashboard() {
                     </div>
                 )}
 
-                {activeTab === 'supplements' && (
+                {activeTab === 'supplements' && !locked && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                         {/* The "Nouveau Supplément" button is already rendered in the header */}
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '1.5rem' }}>
@@ -964,7 +1028,7 @@ export default function AdminDashboard() {
                     </div>
                 )}
 
-                {activeTab === 'collections' && (
+                {activeTab === 'collections' && !locked && (
                     <div>
                         <div style={{ background: 'white', borderRadius: 'var(--radius-lg)', padding: '1rem' }}>
                             {collections.map(c => (
@@ -1105,11 +1169,24 @@ export default function AdminDashboard() {
                     </div>
                 )}
 
-                {activeTab === 'restaurant' && restaurant && (
+                {activeTab === 'subscription' && <SubscriptionPanel onChanged={() => setInfoVersion(v => v + 1)} />}
+
+                {locked && LOCKABLE.includes(activeTab) && (
+                    <div className="card" style={{ padding: '2.5rem', textAlign: 'center', marginBottom: '1.5rem' }}>
+                        <Lock size={36} style={{ marginBottom: '0.8rem' }} />
+                        <h2 style={{ fontSize: '1.4rem', marginBottom: '0.5rem' }}>{access.live ? 'Compte en lecture seule' : 'Abonnement expiré'}</h2>
+                        <p style={{ color: 'var(--glovo-gray)', marginBottom: '1.2rem' }}>
+                            {access.live ? 'L’administrateur a restreint les modifications de votre compte.' : 'Renouvelez votre abonnement pour remettre votre menu en ligne et modifier vos plats.'}
+                        </p>
+                        {!access.live && <button className="btn-primary" style={{ display: 'inline-flex' }} onClick={() => setActiveTab('subscription')}><Crown size={18} /> Renouveler</button>}
+                    </div>
+                )}
+
+                {activeTab === 'restaurant' && restaurant && !locked && (
                     <RestaurantSettings restaurant={restaurant} dishes={dishes} onSaved={setRestaurant} />
                 )}
 
-                {activeTab === 'tables' && (
+                {activeTab === 'tables' && !locked && (
                     <div>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.5rem' }}>
                             {tables.map(table => (

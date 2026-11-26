@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { signIn } from 'next-auth/react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -11,6 +11,13 @@ export default function AdminLogin() {
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const router = useRouter();
+
+    // Link sent to the manager after approval: /admin/login?email=...
+    useEffect(() => {
+        const prefill = new URLSearchParams(window.location.search).get('email');
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- read once from the URL after hydration
+        if (prefill) setEmail(prefill);
+    }, []);
 
     const handleSubmit = async (e) => {
         e.preventDefault();

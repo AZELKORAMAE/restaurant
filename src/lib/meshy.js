@@ -26,9 +26,12 @@ export async function startReconstruction(images) {
         body: JSON.stringify({
             image_urls: images.slice(0, 4),
             ai_model: process.env.MESHY_AI_MODEL || 'latest',
+            geometry_resolution: '2k',   // finest geometry available on this endpoint
             should_texture: true,
             enable_pbr: true,
-            target_formats: ['glb', 'usdz'],
+            image_enhancement: true,
+            remove_lighting: true,       // no baked shadows: the viewer lights the dish
+            target_formats: ['glb'],
         }),
     });
     return json.result;

@@ -1,6 +1,8 @@
 import bcrypt from 'bcryptjs';
 import { handler, ok, HttpError } from '@/lib/api';
 import { uniqueSlug } from '@/lib/slug';
+import { sendMail } from '@/lib/mailer';
+import { siteOrigin } from '@/lib/api';
 import User from '@/models/User';
 import Restaurant from '@/models/Restaurant';
 
@@ -39,5 +41,20 @@ export const POST = handler(async (request) => {
         await User.deleteOne({ _id: user._id });
         throw e;
     }
+    await Promise.all([
+        sendMail({
+            to: process.env.ADMIN_EMAIL,
+            subject: `Nouvelle demande : ${restaurantName}`,
+            title: 'Nouvelle demande de restaurant',
+            paragraphs: [`${name} (${email}, ${phone}) demande la création du restaurant « ${restaurantName} ».`],
+            cta: { label: 'Voir les demandes', url: `${siteOrigin(request)}/superadmin` },
+        }),
+        sendMail({
+            to: email,
+            subject: 'Votre demande est bien reçue',
+            title: 'Demande reçue',
+            paragraphs: [`Bonjour ${name},`, `Votre demande pour « ${restaurantName} » est en cours de validation. Vous recevrez votre lien d’accès dès qu’elle sera approuvée.`],
+        }),
+    ]);
     return ok({ status: 'pending' }, 201);
 });

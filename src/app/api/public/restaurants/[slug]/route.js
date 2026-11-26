@@ -7,7 +7,7 @@ import '@/models/Supplement';
 // Public menu: everything the customer app needs in one request.
 export const GET = handler(async (request, { params }) => {
     const { slug } = await params;
-    const r = await findPublicRestaurant(slug);
+    const { restaurant: r, access } = await findPublicRestaurant(slug);
     const [collections, dishes] = await Promise.all([
         Collection.find({ restaurant: r._id }).sort({ name: 1 }),
         Dish.find({ restaurant: r._id }).sort({ createdAt: -1 }).populate('collection').populate({ path: 'supplements', match: { isActive: true } }),
@@ -16,9 +16,9 @@ export const GET = handler(async (request, { params }) => {
         restaurant: {
             _id: r._id, name: r.name, slug: r.slug, description: r.description, cuisine: r.cuisine,
             address: r.address, city: r.city, phone: r.phone, logo: r.logo, coverImage: r.coverImage,
-            currency: r.currency, acceptsOrders: r.acceptsOrders,
+            currency: r.currency, acceptsOrders: access.canOrder,
         },
         collections,
-        dishes: dishes.map(publicDish),
+        dishes: dishes.map((d) => publicDish(d, { with3d: access.can3d })),
     });
 });
