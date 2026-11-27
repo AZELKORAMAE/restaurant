@@ -21,7 +21,7 @@ async function shareAccess(request, restaurant, owner, settings, { email = true 
     const emailSent = email && await sendMail({
         to: owner.email,
         subject: `Votre restaurant « ${restaurant.name} » est validé`,
-        title: 'Bienvenue sur Menu3D !',
+        title: 'Bienvenue sur 3D Restaurant !',
         paragraphs: [
             `Bonjour ${owner.name},`,
             `Votre restaurant « ${restaurant.name} » est validé. Vous pouvez dès maintenant créer votre menu, mettre vos plats en 3D et imprimer les QR codes de vos tables.`,
@@ -36,7 +36,7 @@ async function shareAccess(request, restaurant, owner, settings, { email = true 
         emailSent: Boolean(emailSent),
         mailConfigured: mailEnabled(),
         whatsapp: whatsappLink(owner.phone, message, settings.countryCode),
-        mailto: `mailto:${owner.email}?subject=${encodeURIComponent(`Accès à votre espace Menu3D — ${restaurant.name}`)}&body=${encodeURIComponent(message)}`,
+        mailto: `mailto:${owner.email}?subject=${encodeURIComponent(`Accès à votre espace 3D Restaurant — ${restaurant.name}`)}&body=${encodeURIComponent(message)}`,
     };
 }
 

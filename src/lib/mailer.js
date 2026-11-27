@@ -7,7 +7,7 @@ const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<
 function layout(title, body, cta) {
     return `<!doctype html><html><body style="margin:0;background:#f6f4f0;font-family:Helvetica,Arial,sans-serif;color:#1a1a1a">
 <div style="max-width:560px;margin:0 auto;padding:32px 20px">
-<div style="font-weight:900;font-size:20px;margin-bottom:24px">Menu<span style="color:#e0a21b">3D</span></div>
+<div style="font-weight:900;font-size:20px;margin-bottom:24px"><span style="color:#e0a21b">3D</span> Restaurant</div>
 <div style="background:#fff;border-radius:16px;padding:28px">
 <h1 style="font-size:22px;margin:0 0 16px">${esc(title)}</h1>
 ${body}
@@ -35,7 +35,7 @@ export async function sendMail({ to, subject, title, paragraphs = [], cta }) {
 
 /** Message the admin can paste in WhatsApp / e-mail when no mail service is configured. */
 export function accessMessage({ managerName, restaurantName, loginUrl, email }) {
-    return `Bonjour ${managerName},\n\nBonne nouvelle : votre restaurant « ${restaurantName} » est validé sur Menu3D.\n`
+    return `Bonjour ${managerName},\n\nBonne nouvelle : votre restaurant « ${restaurantName} » est validé sur 3D Restaurant.\n`
         + `Connectez-vous pour gérer votre menu, vos plats en 3D et vos QR codes :\n${loginUrl}\n\n`
         + `Identifiant : ${email}\nMot de passe : celui choisi lors de votre demande.\n\nÀ bientôt !`;
 }

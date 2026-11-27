@@ -1,8 +1,10 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { QrCode, Box, ScanLine, Store, ShieldCheck, Smartphone, ChefHat, Clock } from 'lucide-react';
+import { QrCode, Box, ScanLine, Store, ShieldCheck, Smartphone, ChefHat, Ruler, Rotate3d, Sparkles, RefreshCw, ArrowRight, Check, ShoppingBag } from 'lucide-react';
 import dbConnect from '@/lib/db';
 import Restaurant from '@/models/Restaurant';
+import Logo from '@/components/brand/Logo';
+import s from './home.module.css';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,8 +20,8 @@ async function getRestaurants() {
 const STEPS = [
     { icon: Store, title: 'Demandez votre compte', text: 'Le gérant remplit la demande de création de son restaurant.' },
     { icon: ShieldCheck, title: 'Validation', text: 'Notre équipe vérifie et approuve le restaurant.' },
-    { icon: ScanLine, title: 'Scannez vos plats', text: 'Photos, temps de préparation, ingrédients, prix, tailles… et un modèle 3D de chaque plat.' },
-    { icon: QrCode, title: 'QR code sur chaque table', text: 'Les clients scannent, voient le menu et posent les plats en 3D sur leur table.' },
+    { icon: ScanLine, title: 'Ajoutez vos plats', text: 'Photos, prix, tailles, ingrédients… et un modèle 3D de chaque plat.' },
+    { icon: QrCode, title: 'QR code sur chaque table', text: 'Les clients scannent, voient le menu et posent les plats sur leur table.' },
 ];
 
 export default async function Home({ searchParams }) {
@@ -31,83 +33,176 @@ export default async function Home({ searchParams }) {
     const restaurants = await getRestaurants();
 
     return (
-        <main style={{ background: 'var(--glovo-light)' }}>
-            <section style={{ background: 'radial-gradient(circle at 80% 20%, #3a2a12 0%, #1a1a1a 55%)', color: 'white', padding: '1.2rem 0 5rem', overflow: 'hidden' }}>
-                <div className="container">
-                    <nav style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4rem', gap: '1rem' }}>
-                        <span style={{ fontWeight: 900, fontSize: '1.3rem', display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <Box size={24} color="var(--glovo-yellow)" /> Menu<span style={{ color: 'var(--glovo-yellow)' }}>3D</span>
-                        </span>
-                        <Link href="/admin/login" style={{ fontWeight: 700, fontSize: '0.9rem', opacity: 0.85 }}>Espace restaurateur</Link>
+        <main className={s.page}>
+            <header className={s.nav}>
+                <div className={`${s.wrap} ${s.navIn}`}>
+                    <Link href="/" aria-label="3D Restaurant, accueil"><Logo size={38} /></Link>
+                    <nav className={s.navLinks}>
+                        <a href="#fonctionnalites" className={s.hideSm}>Fonctionnalités</a>
+                        <a href="#comment" className={s.hideSm}>Comment ça marche</a>
+                        <Link href="/admin/login" className={s.navCta}>Espace restaurateur</Link>
                     </nav>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '3rem', alignItems: 'center' }}>
-                        <div>
-                            <h1 style={{ fontSize: 'clamp(2.4rem, 7vw, 4.2rem)', marginBottom: '1.5rem' }}>
-                                Voyez votre plat <span style={{ color: 'var(--glovo-yellow)' }}>sur votre table</span> avant de commander.
-                            </h1>
-                            <p style={{ fontSize: '1.15rem', opacity: 0.85, marginBottom: '2rem', maxWidth: 520 }}>
-                                Le menu digital en 3D et en réalité augmentée pour les restaurants. Scannez le QR code de la table, choisissez un plat, et posez-le devant vous avec la caméra de votre téléphone.
-                            </p>
-                            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-                                <Link href="/scan" className="btn-primary"><QrCode size={20} /> Scanner ma table</Link>
-                                <Link href="/inscription" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0.9rem 1.6rem', borderRadius: 'var(--radius-xl)', border: '1px solid rgba(255,255,255,0.3)', fontWeight: 700 }}>
-                                    <ChefHat size={20} /> Inscrire mon restaurant
-                                </Link>
+                </div>
+            </header>
+
+            {/* ---------- Hero ---------- */}
+            <section className={s.hero}>
+                <div className={s.gridBg} />
+                <div className={`${s.glow} ${s.glowA}`} />
+                <div className={`${s.glow} ${s.glowB}`} />
+                <div className={`${s.wrap} ${s.heroGrid}`}>
+                    <div>
+                        <span className={s.badge}><span className={s.badgeDot}>AR</span> Réalité augmentée · taille réelle</span>
+                        <h1 className={`${s.display} ${s.title}`}>
+                            <span className={s.gradText}>3D</span><br />Restaurant
+                        </h1>
+                        <p className={s.lead}>Voyez votre plat sur votre table avant de commander.</p>
+                        <p className={s.sub}>
+                            Le menu digital en 3D pour les restaurants. Scannez le QR code de la table, choisissez un plat
+                            et posez-le devant vous avec la caméra de votre téléphone.
+                        </p>
+                        <div className={s.ctas}>
+                            <Link href="/scan" className={s.btnMain}><QrCode size={20} /> Scanner ma table</Link>
+                            <Link href="/inscription" className={s.btnGhost}><ChefHat size={20} /> Inscrire mon restaurant</Link>
+                        </div>
+                        <div className={s.trust}>
+                            <span><Check size={16} color="#ffc244" /> Sans application</span>
+                            <span><Check size={16} color="#ffc244" /> Android & iPhone</span>
+                            <span><Check size={16} color="#ffc244" /> Menu toujours à jour</span>
+                        </div>
+                    </div>
+
+                    <div className={s.stage} aria-hidden>
+                        <div className={s.phone}>
+                            <div className={s.screen}>
+                                <div className={s.notch} />
+                                <div className={s.table} />
+                                <span className={`${s.corner} ${s.c1}`} />
+                                <span className={`${s.corner} ${s.c2}`} />
+                                <span className={`${s.corner} ${s.c3}`} />
+                                <span className={`${s.corner} ${s.c4}`} />
+                                <div className={s.dishShadow} />
+                                <div className={s.dish}>
+                                    <img src="https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=70" alt="" />
+                                </div>
+                                <span className={s.arBtn}><Smartphone size={14} /> Voir sur ma table</span>
                             </div>
                         </div>
-                        <div aria-hidden style={{ position: 'relative', height: 360, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <div style={{ position: 'absolute', width: 300, height: 120, bottom: 40, borderRadius: '50%', background: 'radial-gradient(rgba(255,194,68,0.35), transparent 70%)' }} />
-                            <div style={{ width: 230, height: 360, borderRadius: 36, border: '8px solid #333', background: 'linear-gradient(#2b2b2b, #111)', boxShadow: '0 30px 60px rgba(0,0,0,0.5)', position: 'relative', overflow: 'hidden' }}>
-                                <img src="https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=70" alt="" style={{ position: 'absolute', left: '50%', top: '52%', width: 190, height: 190, objectFit: 'cover', borderRadius: '50%', transform: 'translate(-50%,-50%) perspective(400px) rotateX(55deg)', boxShadow: '0 25px 25px rgba(0,0,0,0.6)' }} />
-                                <span style={{ position: 'absolute', bottom: 18, left: '50%', transform: 'translateX(-50%)', background: 'white', color: '#111', fontWeight: 800, fontSize: 12, padding: '6px 12px', borderRadius: 20, whiteSpace: 'nowrap', display: 'flex', gap: 5, alignItems: 'center' }}>
-                                    <Smartphone size={13} /> Voir sur ma table
-                                </span>
-                            </div>
+                        <div className={`${s.chip} ${s.chipA}`}>
+                            <span className={s.chipIcon}><Ruler size={16} /></span>
+                            <span><b>Taille réelle</b><small>Ø 26 cm</small></span>
+                        </div>
+                        <div className={`${s.chip} ${s.chipB}`}>
+                            <span className={s.chipIcon}><Rotate3d size={16} /></span>
+                            <span><b>Vue 360°</b><small>Tournez le plat</small></span>
                         </div>
                     </div>
                 </div>
             </section>
 
-            <section className="container" style={{ padding: '4rem 1rem' }}>
-                <h2 style={{ fontSize: '2rem', marginBottom: '2rem', textAlign: 'center' }}>Comment ça marche</h2>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.2rem' }}>
-                    {STEPS.map(({ icon: Icon, title, text }, i) => (
-                        <div key={title} className="card" style={{ padding: '1.5rem' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: '0.8rem' }}>
-                                <span style={{ width: 40, height: 40, borderRadius: 12, background: 'var(--glovo-yellow)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon size={20} /></span>
-                                <span style={{ fontWeight: 900, color: 'var(--glovo-gray)' }}>0{i + 1}</span>
-                            </div>
-                            <h3 style={{ fontSize: '1.15rem', marginBottom: '0.4rem' }}>{title}</h3>
-                            <p style={{ color: 'var(--glovo-gray)', fontSize: '0.92rem' }}>{text}</p>
+            {/* ---------- Fonctionnalités ---------- */}
+            <section id="fonctionnalites" className={s.section}>
+                <div className={s.wrap}>
+                    <p className={s.eyebrow}>Fonctionnalités</p>
+                    <h2 className={`${s.display} ${s.h2}`}>Un menu qu’on a envie<br />de toucher.</h2>
+                    <p className={s.h2Sub}>Vos clients découvrent chaque plat comme s’il était déjà servi : en 3D, à sa vraie taille, sur leur propre table.</p>
+                    <div className={s.bento}>
+                        <div className={`${s.card} ${s.span4}`}>
+                            <div className={s.cardGlow} />
+                            <span className={s.icon}><Smartphone size={22} /></span>
+                            <h3>Le plat posé sur la table</h3>
+                            <p>Un appui sur « Voir sur ma table » : la caméra s’ouvre et le plat apparaît devant le client, à sa taille réelle. Il peut tourner autour et s’approcher.</p>
                         </div>
-                    ))}
+                        <div className={`${s.card} ${s.span2}`}>
+                            <span className={s.icon}><Box size={22} /></span>
+                            <div className={s.big}><span className={s.gradText}>360°</span></div>
+                            <p style={{ marginTop: 8 }}>Chaque plat en 3D, à tourner du bout du doigt.</p>
+                        </div>
+                        <div className={`${s.card} ${s.span2}`}>
+                            <span className={s.icon}><QrCode size={22} /></span>
+                            <h3>QR code par table</h3>
+                            <p>Le client scanne, le menu s’ouvre. Aucune application à installer.</p>
+                        </div>
+                        <div className={`${s.card} ${s.span2}`}>
+                            <span className={s.icon}><ShoppingBag size={22} /></span>
+                            <h3>Commande à table</h3>
+                            <p>Tailles, suppléments, quantités : la commande arrive directement au restaurant.</p>
+                        </div>
+                        <div className={`${s.card} ${s.span2}`}>
+                            <span className={s.icon}><RefreshCw size={22} /></span>
+                            <h3>Toujours à jour</h3>
+                            <p>Prix, plats du jour, ruptures : modifiez votre menu en un instant.</p>
+                        </div>
+                    </div>
                 </div>
             </section>
 
-            {restaurants.length > 0 && (
-                <section className="container" style={{ padding: '0 1rem 5rem' }}>
-                    <h2 style={{ fontSize: '2rem', marginBottom: '2rem' }}>Les restaurants</h2>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '1.2rem' }}>
-                        {restaurants.map((r) => (
-                            <Link key={r.slug} href={`/r/${r.slug}`} className="card" style={{ display: 'block' }}>
-                                <div style={{ height: 130, background: r.coverImage ? `center/cover url("${r.coverImage}")` : 'linear-gradient(135deg,#1a1a1a,#555)' }} />
-                                <div style={{ padding: '1rem', display: 'flex', gap: 10, alignItems: 'center' }}>
-                                    {r.logo ? <img src={r.logo} alt="" style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover' }} /> : null}
-                                    <div>
-                                        <div style={{ fontWeight: 800 }}>{r.name}</div>
-                                        <div style={{ fontSize: '0.8rem', color: 'var(--glovo-gray)' }}>{[r.cuisine, r.city].filter(Boolean).join(' · ')}</div>
-                                    </div>
-                                </div>
-                            </Link>
+            {/* ---------- Comment ça marche ---------- */}
+            <section id="comment" className={s.section}>
+                <div className={s.wrap}>
+                    <p className={s.eyebrow}>Pour les restaurants</p>
+                    <h2 className={`${s.display} ${s.h2}`}>Comment ça marche</h2>
+                    <p className={s.h2Sub}>Quatre étapes pour passer d’un menu papier à un menu en 3D.</p>
+                    <div className={s.steps}>
+                        {STEPS.map(({ icon: Icon, title, text }, i) => (
+                            <div key={title} className={s.step}>
+                                <div className={s.stepNum}><span>0{i + 1}</span><span className={s.icon}><Icon size={20} /></span></div>
+                                <h3>{title}</h3>
+                                <p>{text}</p>
+                            </div>
                         ))}
+                    </div>
+                </div>
+            </section>
+
+            {/* ---------- Restaurants ---------- */}
+            {restaurants.length > 0 && (
+                <section className={s.section}>
+                    <div className={s.wrap}>
+                        <p className={s.eyebrow}>Ils sont sur 3D Restaurant</p>
+                        <h2 className={`${s.display} ${s.h2}`} style={{ marginBottom: 40 }}>Les restaurants</h2>
+                        <div className={s.restos}>
+                            {restaurants.map((r) => (
+                                <Link key={r.slug} href={`/r/${r.slug}`} className={s.resto}>
+                                    <div className={s.restoCover} style={r.coverImage ? { backgroundImage: `url("${r.coverImage}")` } : undefined} />
+                                    <div style={{ padding: 16, display: 'flex', gap: 12, alignItems: 'center' }}>
+                                        {r.logo ? <img src={r.logo} alt="" style={{ width: 42, height: 42, borderRadius: '50%', objectFit: 'cover' }} /> : null}
+                                        <div style={{ flex: 1, minWidth: 0 }}>
+                                            <div style={{ fontWeight: 700 }}>{r.name}</div>
+                                            <div style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.6)' }}>{[r.cuisine, r.city].filter(Boolean).join(' · ')}</div>
+                                        </div>
+                                        <ArrowRight size={18} color="#ffc244" />
+                                    </div>
+                                </Link>
+                            ))}
+                        </div>
                     </div>
                 </section>
             )}
 
-            <footer style={{ textAlign: 'center', padding: '2rem', color: 'var(--glovo-gray)', fontSize: '0.85rem', display: 'flex', justifyContent: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
-                <span><Clock size={13} style={{ verticalAlign: -2 }} /> Menu toujours à jour</span>
-                <Link href="/inscription">Inscrire mon restaurant</Link>
-                <Link href="/admin/login">Connexion</Link>
+            {/* ---------- CTA ---------- */}
+            <section className={s.section}>
+                <div className={s.wrap}>
+                    <div className={s.cta}>
+                        <div>
+                            <h2 className={s.display}>Donnez envie avant même la première bouchée.</h2>
+                            <p>Inscrivez votre restaurant : notre équipe valide votre compte et vous accompagne pour mettre vos plats en 3D.</p>
+                        </div>
+                        <Link href="/inscription" className={s.btnDark}><Sparkles size={18} /> Inscrire mon restaurant</Link>
+                    </div>
+                </div>
+            </section>
+
+            <footer className={s.footer}>
+                <div className={`${s.wrap} ${s.footerIn}`}>
+                    <Logo size={30} />
+                    <div className={s.footerLinks}>
+                        <Link href="/scan">Scanner ma table</Link>
+                        <Link href="/inscription">Inscrire mon restaurant</Link>
+                        <Link href="/admin/login">Connexion</Link>
+                    </div>
+                    <span>© {new Date().getFullYear()} 3D Restaurant</span>
+                </div>
             </footer>
         </main>
     );
