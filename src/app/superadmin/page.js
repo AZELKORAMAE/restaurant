@@ -137,6 +137,61 @@ function ManageModal({ restaurant, onClose, onSaved }) {
     );
 }
 
+/** Danger zone: wipes accounts / menus / activity / files. The admin account (env) and settings stay. */
+function ResetCard() {
+    const [groups, setGroups] = useState(null);
+    const [scope, setScope] = useState({ accounts: true, menu: true, activity: true, files: true });
+    const [confirmText, setConfirmText] = useState('');
+    const [busy, setBusy] = useState(false);
+    const [result, setResult] = useState(null);
+    const [version, setVersion] = useState(0);
+    useEffect(() => { api('/api/superadmin/reset').then(setGroups).catch((e) => alert(e.message)); }, [version]);
+
+    const run = async () => {
+        if (!confirm('Cette suppression est définitive. Continuer ?')) return;
+        setBusy(true);
+        try {
+            const res = await api('/api/superadmin/reset', 'POST', { confirm: confirmText, scope });
+            setResult(res.deleted); setConfirmText(''); setVersion((v) => v + 1);
+        } catch (e) { alert(e.message); } finally { setBusy(false); }
+    };
+
+    return (
+        <div className="card" style={{ padding: '1.5rem', border: '1px solid #fecaca', background: '#fffafa' }}>
+            <h3 style={{ marginBottom: 6, color: '#991b1b', display: 'flex', alignItems: 'center', gap: 8 }}><Trash2 size={18} /> Zone de danger : réinitialiser la plateforme</h3>
+            <p style={{ fontSize: '0.88rem', color: 'var(--ink-soft)', marginBottom: '1rem' }}>
+                Efface définitivement les données choisies. Votre compte administrateur et ces paramètres sont toujours conservés.
+            </p>
+            {!groups ? <p>Chargement…</p> : (
+                <div style={{ display: 'grid', gap: '0.6rem', marginBottom: '1rem' }}>
+                    {Object.entries(groups).map(([key, g]) => (
+                        <label key={key} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', padding: '0.7rem 0.9rem', borderRadius: 12, background: 'white', border: '1px solid #f3d4d4', cursor: 'pointer' }}>
+                            <input type="checkbox" checked={Boolean(scope[key])} onChange={(e) => setScope({ ...scope, [key]: e.target.checked })} style={{ marginTop: 3, accentColor: '#dc2626' }} />
+                            <span>
+                                <strong>{g.label}</strong>
+                                <span style={{ display: 'block', fontSize: '0.8rem', color: 'var(--ink-soft)' }}>
+                                    {Object.entries(g.counts).map(([n, c]) => `${c} ${n.toLowerCase()}`).join(' · ')}
+                                </span>
+                            </span>
+                        </label>
+                    ))}
+                </div>
+            )}
+            <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                <input style={{ ...input, maxWidth: 260 }} placeholder="Tapez SUPPRIMER" value={confirmText} onChange={(e) => setConfirmText(e.target.value)} />
+                <button type="button" disabled={busy || confirmText !== 'SUPPRIMER'} onClick={run} style={{ ...btn(confirmText === 'SUPPRIMER' ? '#dc2626' : '#e5a5a5'), padding: '0.75rem 1.1rem' }}>
+                    <Trash2 size={16} /> {busy ? 'Suppression…' : 'Effacer définitivement'}
+                </button>
+            </div>
+            {result && (
+                <p style={{ marginTop: '0.9rem', fontSize: '0.88rem', color: '#166534', fontWeight: 600 }}>
+                    Effacé : {Object.entries(result).map(([n, c]) => `${c} ${n.toLowerCase()}`).join(' · ')}.
+                </p>
+            )}
+        </div>
+    );
+}
+
 function SettingsTab() {
     const [data, setData] = useState(null);
     const [busy, setBusy] = useState(false);
@@ -186,6 +241,7 @@ function SettingsTab() {
                 ))}
             </div>
             <button className="btn-primary" disabled={busy} onClick={save} style={{ justifyContent: 'center' }}>{busy ? 'Enregistrement…' : 'Enregistrer les paramètres'}</button>
+            <ResetCard />
         </div>
     );
 }
