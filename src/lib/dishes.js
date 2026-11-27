@@ -93,10 +93,15 @@ export async function normalizeDishInput(body, restaurantId, { partial = false, 
         }
     }
 
+    // Collection facultative : un plat peut ne pas en avoir
     if (has('collection')) {
-        const okColl = body.collection && await Collection.exists({ _id: body.collection, restaurant: restaurantId });
-        if (!okColl) throw new HttpError(400, 'Collection invalide.');
-        data.collection = body.collection;
+        if (!body.collection) {
+            data.collection = null;
+        } else {
+            const okColl = await Collection.exists({ _id: body.collection, restaurant: restaurantId });
+            if (!okColl) throw new HttpError(400, 'Collection invalide.');
+            data.collection = body.collection;
+        }
     }
     if (has('supplements')) {
         const ids = (body.supplements || []).map((s) => s?._id || s);
@@ -106,7 +111,7 @@ export async function normalizeDishInput(body, restaurantId, { partial = false, 
     }
 
     if (!partial) {
-        for (const k of ['name', 'description', 'image', 'collection']) {
+        for (const k of ['name', 'description', 'image']) {
             if (!data[k]) throw new HttpError(400, `Champ obligatoire manquant : ${k}.`);
         }
         if (data.price === undefined) throw new HttpError(400, 'Prix obligatoire.');

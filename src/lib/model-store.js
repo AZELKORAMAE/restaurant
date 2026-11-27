@@ -1,5 +1,4 @@
 import { readFileBuffer, saveFile, mediaIdFromUrl, deleteFile, findFile } from '@/lib/gridfs';
-import { processModel } from '@/lib/model-pipeline';
 import { HttpError } from '@/lib/api';
 
 /**
@@ -16,10 +15,13 @@ export async function processStoredModel(sourceUrl, settings, { owner, name = 'p
 export async function processBuffer(buffer, settings, { owner, name = 'plat' } = {}) {
     let result;
     try {
+        // Chargé seulement quand un modèle 3D est traité : les plats et leurs photos ne dépendent pas des outils 3D
+        const { processModel } = await import('@/lib/model-pipeline');
         result = await processModel(buffer, settings);
     } catch (e) {
         const invalid = /Invalid|magic|JSON|glTF|header/i.test(e.message);
-        throw new HttpError(400, invalid ? 'Ce fichier n’est pas un modèle GLB valide.' : e.message);
+        console.error('[3D] traitement du modèle impossible :', e);
+        throw new HttpError(400, invalid ? `Ce fichier n’est pas un modèle GLB valide (${e.message}).` : e.message);
     }
     const fileId = await saveFile({
         filename: `${name}.glb`,

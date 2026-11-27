@@ -10,7 +10,6 @@ import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
 import { flatten, clearNodeTransform, transformMesh, compactPrimitive, weld, dedup, prune, simplify, normals } from '@gltf-transform/functions';
 import { MeshoptSimplifier } from 'meshoptimizer';
 import draco3d from 'draco3dgltf';
-import sharp from 'sharp';
 
 export const QUALITY = {
     light: { maxTriangles: 80_000, maxTexture: 1024, label: 'Léger (réseau lent)' },
@@ -148,6 +147,14 @@ function triangleCount(doc) {
 
 /** Resizes textures and re-encodes them (JPEG, or PNG when transparency is needed). */
 async function optimizeTextures(doc, maxSize) {
+    // sharp (module natif) chargé à la demande : si indisponible, les textures restent telles quelles
+    let sharp;
+    try {
+        sharp = (await import('sharp')).default;
+    } catch (e) {
+        console.warn('sharp indisponible, textures non optimisées :', e.message);
+        return;
+    }
     const root = doc.getRoot();
     const alphaTextures = new Set(root.listMaterials()
         .filter((m) => m.getAlphaMode() !== 'OPAQUE')

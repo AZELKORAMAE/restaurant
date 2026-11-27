@@ -70,9 +70,20 @@ export default function Model3DPanel({ dishId, model3d = {}, photo, onChange, fe
         setBusy('upload');
         setProgress(0);
         try {
-            const url = await uploadFile(file, { onProgress: setProgress });
-            if (ext === 'usdz') set({ usdz: url });
-            else { setBusy('process'); await attach({ glb: url, source: 'scan' }); }
+            if (ext === 'usdz') {
+                // Scan iPhone (Object Capture) : on garde le USDZ pour l'AR iPhone et on le convertit
+                // en GLB pour l'affichage dans la page et sur Android
+                const usdzUrl = await uploadFile(file, { onProgress: (p) => setProgress(p * 0.5) });
+                const { usdzToGlb } = await import('@/lib/usdz-to-glb');
+                const glb = await usdzToGlb(file);
+                const glbUrl = await uploadFile(glb, { filename: file.name.replace(/.usdz$/i, '.glb'), onProgress: (p) => setProgress(0.5 + p * 0.5) });
+                setBusy('process');
+                await attach({ glb: glbUrl, source: 'scan', usdz: usdzUrl });
+            } else {
+                const url = await uploadFile(file, { onProgress: setProgress });
+                setBusy('process');
+                await attach({ glb: url, source: 'scan' });
+            }
         } catch (err) {
             alert("Erreur d'import : " + err.message);
         } finally {
@@ -229,7 +240,7 @@ export default function Model3DPanel({ dishId, model3d = {}, photo, onChange, fe
                 <div style={card}>
                     <div style={{ fontWeight: 800, fontSize: '0.9rem', marginBottom: 4 }}>② Importer un scan 3D (.glb / .usdz)</div>
                     <p style={{ fontSize: '0.8rem', color: 'var(--glovo-gray)', marginBottom: '0.7rem' }}>
-                        Qualité maximale : scannez avec Polycam, KIRI Engine, Scaniverse ou Reality Composer (iPhone, « Object Capture »), exportez en GLB. Le fichier est automatiquement centré, posé sur la table, optimisé.
+                        Qualité maximale. <strong>iPhone Pro</strong> : appli gratuite Reality Composer → « Object Capture » → exportez le fichier <strong>.usdz</strong> et choisissez-le ici (converti automatiquement pour Android et le menu). Autres applis : exportez en .glb. Le fichier est centré, posé sur la table et optimisé automatiquement.
                     </p>
                     <label style={{ ...btn(), display: 'inline-flex' }}>
                         <Upload size={18} /> {busy === 'upload' ? `Import… ${Math.round((progress || 0) * 100)}%` : busy === 'process' ? 'Optimisation…' : 'Choisir un fichier'}
