@@ -1,5 +1,7 @@
 import { handler, ok, requireManager, HttpError } from '@/lib/api';
 import { slugify } from '@/lib/slug';
+import { normalizeLocation } from '@/lib/location';
+import { normalizeTheme } from '@/lib/theme';
 import Restaurant from '@/models/Restaurant';
 import { kiriEnabled, KIRI_MIN_PHOTOS } from '@/lib/kiri';
 import { meshyEnabled } from '@/lib/meshy';
@@ -27,6 +29,8 @@ export const PATCH = handler(async (request) => {
     const { restaurant } = await requireManager({ write: true });
     const body = await request.json();
     for (const k of EDITABLE) if (k in body) restaurant[k] = body[k];
+    if ('location' in body) restaurant.location = normalizeLocation(body.location) || undefined;
+    if ('theme' in body) restaurant.theme = normalizeTheme(body.theme);
     if (body.slug && body.slug !== restaurant.slug) {
         const slug = slugify(body.slug);
         if (await Restaurant.exists({ slug, _id: { $ne: restaurant._id } })) throw new HttpError(409, 'Cette adresse de menu est déjà prise.');

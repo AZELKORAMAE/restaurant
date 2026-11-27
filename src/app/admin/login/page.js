@@ -2,15 +2,14 @@
 import React, { useEffect, useState } from 'react';
 import { signIn } from 'next-auth/react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { ShieldCheck, Mail, Lock } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Mail, Lock, Box, ArrowRight } from 'lucide-react';
 
 export default function AdminLogin() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
-    const router = useRouter();
 
     // Link sent to the manager after approval: /admin/login?email=...
     useEffect(() => {
@@ -46,107 +45,51 @@ export default function AdminLogin() {
     };
 
     return (
-        <div style={{
-            minHeight: '100vh',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: 'var(--glovo-light)'
-        }}>
-            <div style={{
-                width: '100%',
-                maxWidth: '400px',
-                background: 'white',
-                padding: '2.5rem',
-                borderRadius: 'var(--radius-lg)',
-                boxShadow: 'var(--shadow-md)',
-                textAlign: 'center'
-            }}>
-                <div style={{
-                    backgroundColor: 'var(--glovo-yellow)',
-                    width: '60px',
-                    height: '60px',
-                    borderRadius: '50%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    margin: '0 auto 1.5rem'
-                }}>
-                    <ShieldCheck size={32} />
-                </div>
-
-                <h1 style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>Espace restaurateur</h1>
-                <p style={{ color: 'var(--glovo-gray)', marginBottom: '2rem' }}>Connectez-vous pour gérer votre restaurant</p>
-
-                <form onSubmit={handleSubmit} style={{ textAlign: 'left' }}>
-                    {error && (
-                        <div style={{
-                            backgroundColor: '#fee2e2',
-                            color: '#dc2626',
-                            padding: '0.8rem',
-                            borderRadius: '0.5rem',
-                            marginBottom: '1rem',
-                            fontSize: '0.9rem'
-                        }}>
-                            {error}
-                        </div>
-                    )}
-
-                    <div style={{ marginBottom: '1.2rem' }}>
-                        <label style={{ display: 'block', marginBottom: '0.4rem', fontWeight: 600, fontSize: '0.9rem' }}>Email Chef/Manager</label>
-                        <div style={{ position: 'relative' }}>
-                            <Mail style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--glovo-gray)' }} size={18} />
-                            <input
-                                type="email"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                required
-                                placeholder="azelkoramae@gmail.com"
-                                style={{
-                                    width: '100%',
-                                    padding: '0.8rem 0.8rem 0.8rem 2.5rem',
-                                    borderRadius: '0.5rem',
-                                    border: '1px solid #ddd',
-                                    outline: 'none'
-                                }}
-                            />
-                        </div>
-                    </div>
-
-                    <div style={{ marginBottom: '2rem' }}>
-                        <label style={{ display: 'block', marginBottom: '0.4rem', fontWeight: 600, fontSize: '0.9rem' }}>Mot de Passe</label>
-                        <div style={{ position: 'relative' }}>
-                            <Lock style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--glovo-gray)' }} size={18} />
-                            <input
-                                type="password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                required
-                                placeholder="••••••••"
-                                style={{
-                                    width: '100%',
-                                    padding: '0.8rem 0.8rem 0.8rem 2.5rem',
-                                    borderRadius: '0.5rem',
-                                    border: '1px solid #ddd',
-                                    outline: 'none'
-                                }}
-                            />
-                        </div>
-                    </div>
-
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        className="btn-primary"
-                        style={{ width: '100%', justifyContent: 'center', padding: '1rem' }}
-                    >
-                        {loading ? 'Connexion...' : 'Se Connecter'}
-                    </button>
-                </form>
-                <p style={{ marginTop: '1.5rem', fontSize: '0.9rem', color: 'var(--glovo-gray)' }}>
-                    Pas encore de compte ? <Link href="/inscription" style={{ fontWeight: 700, color: 'var(--glovo-dark)' }}>Inscrire mon restaurant</Link>
-                </p>
+        <main className="login-split" style={{ minHeight: '100vh', display: 'grid', gridTemplateColumns: '1.1fr 1fr', background: 'var(--paper)' }}>
+            <div className="login-visual" style={{ position: 'relative', overflow: 'hidden', color: 'white', display: 'flex', alignItems: 'flex-end', padding: '3rem' }}>
+                <motion.div aria-hidden initial={{ scale: 1.08 }} animate={{ scale: 1 }} transition={{ duration: 1.8, ease: [0.22, 1, 0.36, 1] }}
+                    style={{ position: 'absolute', inset: 0, background: 'center/cover url("https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=1600&q=75")' }} />
+                <div aria-hidden style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(15,12,8,.15), rgba(15,12,8,.75))' }} />
+                <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3, duration: 0.8 }} style={{ position: 'relative', maxWidth: 440 }}>
+                    <div className="eyebrow" style={{ color: 'rgba(255,255,255,.8)' }}>Espace restaurateur</div>
+                    <h2 style={{ fontSize: '2.4rem', margin: '0.6rem 0' }}>Votre carte, en 3D, sur chaque table.</h2>
+                    <p style={{ opacity: 0.8 }}>Gérez vos plats, vos QR codes et vos commandes depuis un seul endroit.</p>
+                </motion.div>
             </div>
-        </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem 1.2rem' }}>
+                <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }} style={{ width: '100%', maxWidth: 400 }}>
+                    <Link href="/" style={{ fontWeight: 800, fontSize: '1.15rem', display: 'inline-flex', alignItems: 'center', gap: 8, marginBottom: '2.5rem' }}>
+                        <Box size={20} color="var(--gold)" /> Menu<span style={{ color: 'var(--gold)' }}>3D</span>
+                    </Link>
+                    <h1 style={{ fontSize: '2rem', marginBottom: '0.4rem' }}>Bon retour parmi nous</h1>
+                    <p style={{ color: 'var(--ink-soft)', marginBottom: '2rem' }}>Connectez-vous pour gérer votre restaurant.</p>
+
+                    <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '1rem' }}>
+                        <label className="field">
+                            <span>E-mail</span>
+                            <div style={{ position: 'relative' }}>
+                                <Mail size={18} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--ink-soft)' }} />
+                                <input className="input" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" style={{ paddingLeft: 42 }} />
+                            </div>
+                        </label>
+                        <label className="field">
+                            <span>Mot de passe</span>
+                            <div style={{ position: 'relative' }}>
+                                <Lock size={18} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--ink-soft)' }} />
+                                <input className="input" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" style={{ paddingLeft: 42 }} />
+                            </div>
+                        </label>
+                        {error && <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} style={{ background: '#fef2f2', color: '#991b1b', padding: '0.75rem 1rem', borderRadius: 12, fontSize: '0.9rem' }}>{error}</motion.div>}
+                        <button type="submit" className="btn-primary" disabled={loading} style={{ justifyContent: 'center', marginTop: '0.5rem' }}>
+                            {loading ? 'Connexion…' : 'Se connecter'} {!loading && <ArrowRight size={18} />}
+                        </button>
+                    </form>
+                    <p style={{ marginTop: '1.8rem', fontSize: '0.92rem', color: 'var(--ink-soft)' }}>
+                        Pas encore de compte ? <Link href="/inscription" style={{ fontWeight: 700, color: 'var(--glovo-dark)' }}>Créer le site de mon restaurant</Link>
+                    </p>
+                </motion.div>
+            </div>
+        </main>
     );
 }

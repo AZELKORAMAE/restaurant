@@ -1,23 +1,40 @@
 "use client";
-import { useState, useEffect } from 'react';
-import Header from '@/components/Header';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import Link from 'next/link';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Search, ShoppingBag, X, MapPin, Phone, Navigation, ExternalLink, Box } from 'lucide-react';
 import DishCard from '@/components/DishCard';
 import DishCustomizer from '@/components/DishCustomizer';
 import CartSidebar from '@/components/CartSidebar';
+import RestaurantHero from '@/components/restaurant/RestaurantHero';
+import { brandVars, mapsLinks } from '@/lib/theme';
+
+const ease = [0.22, 1, 0.36, 1];
+
+function Reveal({ children, delay = 0 }) {
+  return (
+    <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: '-40px' }} transition={{ duration: 0.6, delay, ease }} style={{ height: '100%' }}>
+      {children}
+    </motion.div>
+  );
+}
 
 export default function RestaurantMenu({ slug }) {
   const [restaurant, setRestaurant] = useState(null);
-  const [notFound, setNotFound] = useState(false);
-  const [tableNumber, setTableNumber] = useState(null);
-  const [initialView, setInitialView] = useState('photo');
   const [dishes, setDishes] = useState([]);
   const [collections, setCollections] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
+  const [tableNumber, setTableNumber] = useState(null);
   const [cart, setCart] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [selectedDish, setSelectedDish] = useState(null);
-  const [selectedCollection, setSelectedCollection] = useState(null);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [initialView, setInitialView] = useState('photo');
+  const [search, setSearch] = useState('');
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [activeId, setActiveId] = useState(null);
+  const [scrolled, setScrolled] = useState(false);
+  const sectionRefs = useRef({});
 
   useEffect(() => {
     // Table detected from the QR code (?table=5), remembered per restaurant for this visit
@@ -29,277 +46,213 @@ export default function RestaurantMenu({ slug }) {
     } catch {
       setTableNumber(tableNum);
     }
-
-    async function fetchData() {
+    (async () => {
       try {
-        const res = await fetch(`/api/public/restaurants/${encodeURIComponent(slug)}`);
-        const json = await res.json();
-        if (!json.success) {
-          setNotFound(true);
-          return;
-        }
+        const json = await (await fetch(`/api/public/restaurants/${encodeURIComponent(slug)}`)).json();
+        if (!json.success) { setNotFound(true); return; }
         setRestaurant(json.data.restaurant);
         setDishes(json.data.dishes);
-        setCollections(json.data.collections);
+        setCollections(json.data.collections.filter((c) => c.isActive !== false));
         document.title = `${json.data.restaurant.name} · Menu`;
-      } catch (err) {
-        console.error("Failed to fetch data", err);
+      } catch {
+        setNotFound(true);
       } finally {
         setLoading(false);
       }
-    }
-    fetchData();
+    })();
   }, [slug]);
 
-  const handleAddToCart = (customizedDish) => {
-    setCart(prev => [...prev, customizedDish]);
-    setIsCartOpen(true);
-  };
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 80);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
-  const filteredDishes = dishes.filter(d => {
-    const matchesCollection = selectedCollection ? d.collection?._id === selectedCollection._id : true;
-    const matchesSearch = searchQuery
-      ? d.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      d.collection?.name.toLowerCase().includes(searchQuery.toLowerCase())
-      : true;
-    return matchesCollection && matchesSearch;
-  });
+  // Highlight the category being read
+  useEffect(() => {
+    if (!collections.length) return;
+    const io = new IntersectionObserver((entries) => {
+      const visible = entries.filter((e) => e.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
+      if (visible) setActiveId(visible.target.dataset.id);
+    }, { rootMargin: '-140px 0px -60% 0px' });
+    Object.values(sectionRefs.current).forEach((el) => el && io.observe(el));
+    return () => io.disconnect();
+  }, [collections, search]);
 
-  const filteredCollections = searchQuery
-    ? collections.filter(c => c.name.toLowerCase().includes(searchQuery.toLowerCase()))
-    : collections;
+  const q = search.trim().toLowerCase();
+  const sections = useMemo(() => {
+    const match = (d) => !q || d.name.toLowerCase().includes(q) || (d.description || '').toLowerCase().includes(q)
+      || (d.ingredients || []).some((i) => i.name.toLowerCase().includes(q));
+    const list = collections.map((c) => ({ ...c, dishes: dishes.filter((d) => (d.collection?._id || d.collection) === c._id && match(d)) }));
+    const orphans = dishes.filter((d) => !collections.some((c) => c._id === (d.collection?._id || d.collection)) && match(d));
+    if (orphans.length) list.push({ _id: 'autres', name: 'À la carte', dishes: orphans });
+    return list.filter((s) => s.dishes.length);
+  }, [collections, dishes, q]);
 
-  const dishes3d = dishes.filter(d => d.model3d?.status === 'ready' && d.isActive !== false).length;
+  const dishes3d = dishes.filter((d) => d.model3d?.status === 'ready' && d.isActive !== false).length;
   const currency = restaurant?.currency || 'DH';
+  const cartCount = cart.reduce((n, i) => n + (i.quantity || 1), 0);
+  const cartTotal = cart.reduce((n, i) => n + i.finalPrice, 0);
+  const maps = mapsLinks(restaurant?.location);
+
+  const goTo = (id) => {
+    const el = sectionRefs.current[id];
+    if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 130, behavior: 'smooth' });
+  };
+  const openDish = (dish, view = 'photo') => { setInitialView(view); setSelectedDish(dish); };
 
   if (notFound) {
     return (
-      <main style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem', textAlign: 'center' }}>
-        <div>
-          <h1 style={{ fontSize: '2rem', marginBottom: '1rem' }}>Menu introuvable</h1>
-          <p style={{ color: 'var(--glovo-gray)', marginBottom: '2rem' }}>Ce restaurant n’existe pas ou n’est pas encore en ligne.</p>
-          <a href="/scan" className="btn-primary" style={{ display: 'inline-flex' }}>Scanner un autre QR code</a>
-        </div>
+      <main style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem', textAlign: 'center', background: 'var(--paper)' }}>
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease }}>
+          <h1 style={{ fontSize: '2.2rem', marginBottom: '0.8rem' }}>Menu indisponible</h1>
+          <p style={{ color: 'var(--ink-soft)', marginBottom: '2rem' }}>Ce restaurant n’existe pas ou n’est pas en ligne pour le moment.</p>
+          <Link href="/scan" className="btn-primary" style={{ display: 'inline-flex' }}>Scanner un autre QR code</Link>
+        </motion.div>
       </main>
     );
   }
 
   return (
-    <main style={{ backgroundColor: '#fdfdfd' }}>
-      <Header
-        restaurant={restaurant}
-        tableNumber={tableNumber}
-        cartCount={cart.length}
-        onCartClick={() => setIsCartOpen(true)}
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
-        dishes={dishes}
-        collections={collections}
-        onSelectDish={(dish) => {
-          setInitialView('photo');
-          setSelectedDish(dish);
-          setSearchQuery('');
-        }}
-        onSelectCollection={(coll) => {
-          setSelectedCollection(coll);
-          setSearchQuery('');
-        }}
-      />
+    <main style={{ background: 'var(--paper)', minHeight: '100vh', ...brandVars(restaurant?.theme) }}>
+      {/* Header */}
+      <header className={scrolled ? 'glass' : ''} style={{
+        position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100, transition: 'background .35s, box-shadow .35s, color .35s',
+        background: scrolled ? 'rgba(250,248,244,0.97)' : 'transparent',
+        color: scrolled ? 'var(--glovo-dark)' : 'white', boxShadow: scrolled ? '0 1px 0 var(--line)' : 'none',
+      }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0.7rem 1rem', display: 'flex', alignItems: 'center', gap: '0.7rem' }}>
+          <AnimatePresence>
+            {scrolled && restaurant && (
+              <motion.button type="button" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -8 }}
+                style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, color: 'inherit' }}>
+                {restaurant.logo ? <img src={restaurant.logo} alt="" style={{ width: 34, height: 34, borderRadius: '50%', objectFit: 'cover' }} />
+                  : <span style={{ width: 34, height: 34, borderRadius: '50%', background: 'var(--brand)' }} />}
+                <strong style={{ fontFamily: 'var(--font-serif)', fontSize: '1.05rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '40vw' }}>{restaurant.name}</strong>
+              </motion.button>
+            )}
+          </AnimatePresence>
+          <span style={{ flex: 1 }} />
+          {tableNumber && scrolled && <span style={{ background: 'var(--brand)', color: 'var(--brand-ink)', padding: '0.3rem 0.7rem', borderRadius: 999, fontWeight: 800, fontSize: '0.78rem', whiteSpace: 'nowrap' }}>Table {tableNumber}</span>}
+          <button type="button" aria-label="Rechercher" onClick={() => { setSearchOpen(true); setTimeout(() => goTo(sections[0]?._id), 50); }}
+            style={{ width: 42, height: 42, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'inherit', background: scrolled ? 'white' : 'rgba(255,255,255,0.16)', border: scrolled ? '1px solid var(--line)' : '1px solid rgba(255,255,255,0.3)', backdropFilter: 'blur(8px)' }}>
+            <Search size={18} />
+          </button>
+          <button type="button" aria-label="Panier" onClick={() => setIsCartOpen(true)}
+            style={{ position: 'relative', width: 42, height: 42, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--brand)', color: 'var(--brand-ink)', boxShadow: '0 8px 18px -6px rgba(0,0,0,.35)' }}>
+            <ShoppingBag size={18} />
+            <AnimatePresence>
+              {cartCount > 0 && (
+                <motion.span key={cartCount} initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }} transition={{ type: 'spring', stiffness: 500, damping: 18 }}
+                  style={{ position: 'absolute', top: -4, right: -4, minWidth: 20, height: 20, borderRadius: 999, background: '#1a1a1a', color: 'white', fontSize: '0.7rem', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 5px', border: '2px solid white' }}>
+                  {cartCount}
+                </motion.span>
+              )}
+            </AnimatePresence>
+          </button>
+        </div>
+      </header>
 
-      {/* Hero Section */}
-      {!selectedCollection ? (
-        <section
-          className="hero-section"
-          style={{
-            position: 'relative',
-            padding: '10rem 0',
-            textAlign: 'center',
-            backgroundImage: `linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.7)), url("${restaurant?.coverImage || 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&w=1920&q=80'}")`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            backgroundColor: '#1a1a1a', // Fallback
-            color: 'white'
-          }}
-        >
-          <style>{`
-            @media (min-width: 769px) {
-              .hero-section {
-                background-attachment: fixed;
-              }
-            }
-          `}</style>
-          <div className="container" style={{ position: 'relative', zIndex: 1 }}>
-            <h1 style={{
-              fontSize: 'clamp(3rem, 10vw, 5.5rem)',
-              fontWeight: 900,
-              marginBottom: '1.5rem',
-              letterSpacing: '-0.03em',
-              fontFamily: 'var(--font-serif)',
-              animation: 'fadeInUp 1s ease-out',
-              padding: '0 1rem',
-              lineHeight: 1.1,
-              textShadow: '0 4px 30px rgba(0,0,0,0.3)'
-            }}>
-              <span className="font-marker">{restaurant?.name || '\u00a0'}</span>
-            </h1>
-            <p style={{
-              fontSize: 'clamp(1rem, 3.5vw, 1.3rem)',
-              opacity: 0.95,
-              maxWidth: '700px',
-              margin: '0 auto',
-              lineHeight: 1.6
-            }}>
-              {restaurant?.description || restaurant?.cuisine || ''}
-            </p>
-            {tableNumber && (
-              <div style={{ marginTop: '1.5rem', display: 'inline-block', background: 'var(--glovo-yellow)', color: 'var(--glovo-dark)', padding: '0.5rem 1.2rem', borderRadius: '2rem', fontWeight: 800 }}>
-                Vous êtes à la table {tableNumber}
-              </div>
-            )}
-            {dishes3d > 0 && (
-              <div style={{ marginTop: '1rem', fontSize: '0.95rem', opacity: 0.95, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-                <span style={{ background: 'rgba(255,255,255,0.18)', backdropFilter: 'blur(6px)', padding: '0.45rem 1rem', borderRadius: '2rem', fontWeight: 700 }}>
-                  ✨ {dishes3d} plat{dishes3d > 1 ? 's' : ''} à voir en 3D sur votre table
-                </span>
-              </div>
-            )}
-          </div>
-        </section>
+      {restaurant ? (
+        <RestaurantHero restaurant={restaurant} tableNumber={tableNumber} dishes3d={dishes3d} onMenu={() => goTo(sections[0]?._id)} />
       ) : (
-        <section style={{
-          position: 'relative',
-          padding: '8rem 0',
-          textAlign: 'center',
-          backgroundImage: `linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url("${selectedCollection.image || 'https://images.unsplash.com/photo-1504674900247-0877df9cc836'}")`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          color: 'white',
-          transition: 'all 0.5s ease-in-out'
-        }}>
-          <div className="container" style={{ position: 'relative', zIndex: 1 }}>
-            <button
-              onClick={() => setSelectedCollection(null)}
-              style={{
-                color: 'white',
-                marginBottom: '2rem',
-                textDecoration: 'underline',
-                cursor: 'pointer',
-                background: 'none',
-                border: 'none',
-                fontSize: '1rem'
-              }}
-            >
-              ← Retour au menu complet
-            </button>
-            <h1 style={{ fontSize: '3.5rem', fontWeight: 900, marginBottom: '1rem' }}>{selectedCollection.name}</h1>
-            <p style={{ fontSize: '1.2rem', opacity: 0.8 }}>Découvrez nos délicieux {selectedCollection.name.toLowerCase()}</p>
+        <div className="skeleton" style={{ height: '80vh', borderRadius: 0 }} />
+      )}
+
+      {/* Categories + search */}
+      <div className="glass" style={{ position: 'sticky', top: 62, zIndex: 90, borderBottom: '1px solid var(--line)', display: sections.length || searchOpen ? 'block' : 'none' }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0.75rem 1rem', display: 'flex', gap: 8, alignItems: 'center' }}>
+          <AnimatePresence initial={false}>
+            {searchOpen && (
+              <motion.div initial={{ width: 0, opacity: 0 }} animate={{ width: 'min(260px, 60vw)', opacity: 1 }} exit={{ width: 0, opacity: 0 }} transition={{ duration: 0.3, ease }} style={{ position: 'relative', flexShrink: 0 }}>
+                <input autoFocus className="input" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Un plat, un ingrédient…" style={{ padding: '0.55rem 2.2rem 0.55rem 0.9rem', borderRadius: 999 }} />
+                <button type="button" aria-label="Fermer la recherche" onClick={() => { setSearch(''); setSearchOpen(false); }} style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)' }}><X size={16} /></button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+          <nav className="no-scrollbar" style={{ display: 'flex', gap: 8, overflowX: 'auto', flex: 1 }}>
+            {sections.map((s) => (
+              <button key={s._id} type="button" onClick={() => goTo(s._id)} className={`chip ${activeId === s._id ? 'active' : ''}`}>{s.name}</button>
+            ))}
+          </nav>
+        </div>
+      </div>
+
+      {/* Menu */}
+      <div style={{ maxWidth: 1100, margin: '0 auto', padding: '2.5rem 1rem 3rem' }}>
+        {loading && (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.5rem' }}>
+            {[0, 1, 2].map((i) => <div key={i} className="skeleton" style={{ height: 360 }} />)}
+          </div>
+        )}
+        {!loading && sections.length === 0 && (
+          <div style={{ textAlign: 'center', padding: '4rem 1rem', color: 'var(--ink-soft)' }}>
+            {q ? `Aucun plat ne correspond à « ${search} ».` : 'La carte arrive bientôt.'}
+          </div>
+        )}
+        {sections.map((s) => (
+          <section key={s._id} data-id={s._id} ref={(el) => { sectionRefs.current[s._id] = el; }} style={{ marginBottom: '3.5rem', scrollMarginTop: 140 }}>
+            <Reveal>
+              <div style={{ display: 'flex', alignItems: 'flex-end', gap: '1rem', marginBottom: '1.4rem' }}>
+                <div>
+                  <div className="eyebrow">{s.dishes.length} plat{s.dishes.length > 1 ? 's' : ''}</div>
+                  <h2 style={{ fontSize: 'clamp(1.7rem, 4vw, 2.3rem)', marginTop: 4 }}>{s.name}</h2>
+                  {s.description && <p style={{ color: 'var(--ink-soft)', marginTop: 4 }}>{s.description}</p>}
+                </div>
+                <div style={{ flex: 1, height: 1, background: 'var(--line)', marginBottom: 12 }} />
+              </div>
+            </Reveal>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.5rem' }}>
+              {s.dishes.map((dish, i) => (
+                <Reveal key={dish._id} delay={(i % 3) * 0.08}>
+                  <DishCard dish={dish} currency={currency} onAdd={() => openDish(dish)} onView3D={() => openDish(dish, '3d')} />
+                </Reveal>
+              ))}
+            </div>
+          </section>
+        ))}
+      </div>
+
+      {/* Find us */}
+      {restaurant && (maps || restaurant.phone) && (
+        <section style={{ background: 'white', borderTop: '1px solid var(--line)' }}>
+          <div style={{ maxWidth: 1100, margin: '0 auto', padding: '3.5rem 1rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem', alignItems: 'center' }}>
+            <Reveal>
+              <div className="eyebrow">Nous trouver</div>
+              <h2 style={{ fontSize: 'clamp(1.8rem, 4vw, 2.4rem)', margin: '0.4rem 0 1rem' }}>{restaurant.name}</h2>
+              {restaurant.location?.address && <p style={{ display: 'flex', gap: 8, color: 'var(--ink-soft)', marginBottom: '0.6rem' }}><MapPin size={18} style={{ flexShrink: 0, marginTop: 3 }} /> {restaurant.location.address}</p>}
+              {restaurant.phone && <p style={{ display: 'flex', gap: 8, color: 'var(--ink-soft)', marginBottom: '1.4rem' }}><Phone size={18} style={{ flexShrink: 0, marginTop: 3 }} /> {restaurant.phone}</p>}
+              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                {maps && <a href={maps.directions} target="_blank" rel="noreferrer" className="btn-primary"><Navigation size={17} /> Itinéraire</a>}
+                {restaurant.phone && <a href={`tel:${restaurant.phone}`} className="btn-ghost"><Phone size={17} /> Appeler</a>}
+                {maps && <a href={maps.open} target="_blank" rel="noreferrer" className="btn-ghost"><ExternalLink size={16} /> Google Maps</a>}
+              </div>
+            </Reveal>
+            {maps && (
+              <Reveal delay={0.1}>
+                <iframe title={`Plan — ${restaurant.name}`} src={maps.embed} loading="lazy" referrerPolicy="no-referrer-when-downgrade"
+                  style={{ width: '100%', height: 340, border: 0, borderRadius: 24, boxShadow: 'var(--shadow-float)' }} />
+              </Reveal>
+            )}
           </div>
         </section>
       )}
 
-      <div className="container" style={{ marginTop: '-4rem', position: 'relative', zIndex: 10, marginBottom: '8rem' }}>
-        {loading ? (
-          <div style={{ textAlign: 'center', padding: '10rem', fontSize: '1.2rem', background: 'white', borderRadius: '3rem', boxShadow: '0 20px 40px rgba(0,0,0,0.05)' }}>
-            Chargement de votre expérience gastronomique...
-          </div>
-        ) : (
-          <>
-            {/* Simple Collection List (One per line) */}
-            {!selectedCollection && (
-              <div style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '1.5rem',
-                marginBottom: '4rem',
-                padding: '0 1.5rem' // Consistent margins
-              }}>
-                {filteredCollections.map(c => (
-                  <div
-                    key={c._id}
-                    onClick={() => setSelectedCollection(c)}
-                    style={{
-                      position: 'relative',
-                      width: '100%',
-                      height: '160px', // Increased height
-                      borderRadius: '1.8rem',
-                      overflow: 'hidden',
-                      cursor: 'pointer',
-                      transition: 'all 0.3s ease',
-                      boxShadow: '0 4px 15px rgba(0,0,0,0.08)',
-                      opacity: c.isActive === false ? 0.7 : 1,
-                      filter: c.isActive === false ? 'grayscale(80%)' : 'none'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.transform = 'scale(1.01)';
-                      e.currentTarget.style.boxShadow = '0 10px 25px rgba(0,0,0,0.12)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.transform = 'scale(1)';
-                      e.currentTarget.style.boxShadow = '0 4px 15px rgba(0,0,0,0.08)';
-                    }}
-                  >
-                    <img src={c.image || restaurant?.coverImage || 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=800&q=60'} alt={c.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    <div style={{
-                      position: 'absolute',
-                      inset: 0,
-                      background: 'linear-gradient(90deg, rgba(0,0,0,0.7) 0%, transparent 60%)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      padding: '0 2rem'
-                    }}>
-                      <div style={{ textAlign: 'left' }}>
-                        <span style={{
-                          color: 'white',
-                          fontSize: '1.2rem',
-                          fontWeight: 800,
-                          textShadow: '0 2px 4px rgba(0,0,0,0.3)'
-                        }}>{c.name}</span>
-                        {c.isActive === false && (
-                          <div style={{
-                            fontSize: '0.6rem',
-                            backgroundColor: '#ef4444',
-                            color: 'white',
-                            padding: '2px 6px',
-                            borderRadius: '4px',
-                            marginTop: '0.4rem',
-                            fontWeight: 900,
-                            display: 'inline-block'
-                          }}>INDISPONIBLE</div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+      <footer style={{ textAlign: 'center', padding: '2rem 1rem 6rem', color: 'var(--ink-soft)', fontSize: '0.82rem' }}>
+        © {new Date().getFullYear()} {restaurant?.name} · <Link href="/" style={{ fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 4 }}><Box size={13} /> Menu3D</Link>
+      </footer>
 
-            {/* Dishes Grid */}
-            {/* Dish Grid with Same Margins */}
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-              gap: '2.5rem',
-              padding: '0 1.5rem' // Matching margins with collections
-            }}>
-              {filteredDishes.map(dish => (
-                <DishCard
-                  key={dish._id}
-                  dish={dish}
-                  currency={currency}
-                  onAdd={() => { setInitialView('photo'); setSelectedDish(dish); }}
-                  onView3D={() => { setInitialView('3d'); setSelectedDish(dish); }}
-                />
-              ))}
-            </div>
-
-            {filteredDishes.length === 0 && !loading && (
-              <div style={{ textAlign: 'center', padding: '5rem', background: 'white', borderRadius: '2rem', boxShadow: '0 10px 30px rgba(0,0,0,0.05)' }}>
-                <p style={{ fontSize: '1.2rem', color: '#666' }}>Aucun plat disponible pour cette sélection.</p>
-              </div>
-            )}
-          </>
+      {/* Floating cart */}
+      <AnimatePresence>
+        {cartCount > 0 && !isCartOpen && !selectedDish && (
+          <motion.button type="button" onClick={() => setIsCartOpen(true)}
+            initial={{ y: 90, x: '-50%', opacity: 0 }} animate={{ y: 0, x: '-50%', opacity: 1 }} exit={{ y: 90, x: '-50%', opacity: 0 }} transition={{ type: 'spring', stiffness: 320, damping: 28 }}
+            style={{ position: 'fixed', bottom: 18, left: '50%', zIndex: 120, display: 'flex', alignItems: 'center', gap: '1rem', padding: '0.85rem 0.9rem 0.85rem 1.3rem', borderRadius: 999, background: '#1a1a1a', color: 'white', boxShadow: 'var(--shadow-float)', whiteSpace: 'nowrap', fontWeight: 700 }}>
+            <ShoppingBag size={18} /> Mon panier · {cartCount} article{cartCount > 1 ? 's' : ''}
+            <span style={{ background: 'var(--brand)', color: 'var(--brand-ink)', borderRadius: 999, padding: '0.35rem 0.8rem' }}>{cartTotal.toFixed(2)} {currency}</span>
+          </motion.button>
         )}
-      </div>
+      </AnimatePresence>
 
       {selectedDish && (
         <DishCustomizer
@@ -308,7 +261,7 @@ export default function RestaurantMenu({ slug }) {
           currency={currency}
           initialView={initialView}
           onClose={() => setSelectedDish(null)}
-          onAddToCart={handleAddToCart}
+          onAddToCart={(item) => { setCart((prev) => [...prev, item]); }}
         />
       )}
 

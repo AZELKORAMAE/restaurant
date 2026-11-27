@@ -67,7 +67,7 @@ export default function CartSidebar({ cart = [], isOpen, onClose, onUpdateCart, 
     if (!isOpen) return null;
 
     return (
-        <div style={{
+        <div className="anim-fade" style={{
             position: 'fixed',
             top: 0,
             left: 0,
@@ -79,7 +79,7 @@ export default function CartSidebar({ cart = [], isOpen, onClose, onUpdateCart, 
             justifyContent: 'flex-end',
             backdropFilter: 'blur(4px)'
         }}>
-            <div style={{
+            <div className="anim-slide-left" style={{
                 width: '100%',
                 maxWidth: '450px',
                 height: '100%',
@@ -90,7 +90,7 @@ export default function CartSidebar({ cart = [], isOpen, onClose, onUpdateCart, 
             }}>
                 <div style={{ padding: '1.5rem', borderBottom: '1px solid #eee', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <h2 style={{ fontSize: '1.5rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
-                        <ShoppingBag size={24} /> Votre Panier
+                        <ShoppingBag size={24} /> Votre panier
                     </h2>
                     <button onClick={onClose}><X size={28} /></button>
                 </div>

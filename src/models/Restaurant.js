@@ -17,6 +17,20 @@ const RestaurantSchema = new mongoose.Schema({
     reviewNote: String,
     reviewedAt: Date,
     acceptsOrders: { type: Boolean, default: true },
+    // Position on the map (chosen on a map / from a Google Maps link) — shown on the restaurant's site
+    location: {
+        lat: Number,
+        lng: Number,
+        address: String,
+        mapsUrl: String,
+    },
+    // Look of the restaurant's site
+    theme: {
+        accent: { type: String, default: '#FFC244' },
+        overlay: { type: Number, default: 0.45 },   // darkness of the cover image (0 → 0.85)
+        focalX: { type: Number, default: 50 },      // part of the cover image kept visible (%)
+        focalY: { type: Number, default: 50 },
+    },
     // Subscription
     plan: { type: String, enum: ['essentiel', 'pro', 'premium'], default: 'pro' },
     trialEndsAt: Date,

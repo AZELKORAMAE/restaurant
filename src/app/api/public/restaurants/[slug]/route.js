@@ -16,7 +16,7 @@ export const GET = handler(async (request, { params }) => {
         restaurant: {
             _id: r._id, name: r.name, slug: r.slug, description: r.description, cuisine: r.cuisine,
             address: r.address, city: r.city, phone: r.phone, logo: r.logo, coverImage: r.coverImage,
-            currency: r.currency, acceptsOrders: access.canOrder,
+            currency: r.currency, acceptsOrders: access.canOrder, location: r.location, theme: r.theme,
         },
         collections,
         dishes: dishes.map((d) => publicDish(d, { with3d: access.can3d })),

@@ -49,7 +49,7 @@ export default function DishCustomizer({ dish, onClose, onAddToCart, currency = 
     if (!dish) return null;
 
     return (
-        <div style={{
+        <div className="anim-fade" style={{
             position: 'fixed',
             top: 0,
             left: 0,
@@ -63,7 +63,7 @@ export default function DishCustomizer({ dish, onClose, onAddToCart, currency = 
             backdropFilter: 'blur(4px)',
             padding: '1rem'
         }}>
-            <div className="dish-customizer-modal" style={{
+            <div className="dish-customizer-modal anim-pop" style={{
                 backgroundColor: 'white',
                 width: '100%',
                 maxWidth: '600px',

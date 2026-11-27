@@ -2,170 +2,79 @@
 import React from 'react';
 import { Plus, Box, Clock } from 'lucide-react';
 
+/** Menu card: photo, badges, name, description, price and quick add. */
 export default function DishCard({ dish, onAdd, onView3D, currency = 'DH' }) {
+    const inactive = dish.isActive === false;
     const has3d = dish.model3d?.status === 'ready';
-    const isInactive = dish.isActive === false;
+    const tags = (dish.tags || []).slice(0, 2);
 
     return (
-        <div
-            className="card"
-            onClick={() => !isInactive && onAdd(dish)}
+        <article
+            className={`hover-zoom ${inactive ? '' : 'hover-lift'}`}
+            onClick={() => !inactive && onAdd(dish)}
             style={{
-                display: 'flex',
-                flexDirection: 'column',
-                height: '100%',
-                backgroundColor: 'var(--glovo-white)',
-                cursor: isInactive ? 'not-allowed' : 'pointer',
-                opacity: isInactive ? 0.6 : 1,
-                position: 'relative'
+                background: 'white', borderRadius: 22, overflow: 'hidden', border: '1px solid var(--line)', boxShadow: 'var(--shadow-soft)',
+                display: 'flex', flexDirection: 'column', height: '100%', cursor: inactive ? 'not-allowed' : 'pointer', opacity: inactive ? 0.55 : 1,
             }}
         >
-            <div style={{
-                position: 'relative',
-                width: '100%',
-                paddingBottom: '80%', // Slightly taller aspect ratio
-                overflow: 'hidden'
-            }}>
-                <img
-                    src={dish.image}
-                    alt={dish.name}
-                    style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'cover',
-                        transition: 'transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
-                        filter: isInactive ? 'grayscale(100%)' : 'none'
-                    }}
-                    className="dish-image"
-                />
-                {has3d && !isInactive && (
+            <div style={{ position: 'relative', aspectRatio: '4 / 3', overflow: 'hidden', background: 'var(--sand)' }}>
+                <img src={dish.image} alt={dish.name} loading="lazy" onError={(e) => { e.currentTarget.style.visibility = 'hidden'; }} style={{ width: '100%', height: '100%', objectFit: 'cover', filter: inactive ? 'grayscale(1)' : 'none' }} />
+                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0) 55%, rgba(0,0,0,0.35) 100%)' }} />
+                {dish.prepTime ? (
+                    <span className="glass" style={{ position: 'absolute', top: 12, left: 12, display: 'flex', alignItems: 'center', gap: 4, padding: '0.3rem 0.65rem', borderRadius: 999, fontSize: '0.75rem', fontWeight: 700 }}>
+                        <Clock size={13} /> {dish.prepTime} min
+                    </span>
+                ) : null}
+                {inactive && (
+                    <span style={{ position: 'absolute', top: 12, right: 12, background: 'white', padding: '0.3rem 0.7rem', borderRadius: 999, fontSize: '0.72rem', fontWeight: 800 }}>Indisponible</span>
+                )}
+                {has3d && !inactive && (
                     <button
+                        type="button"
                         onClick={(e) => { e.stopPropagation(); onView3D?.(dish); }}
                         aria-label={`Voir ${dish.name} en 3D sur ma table`}
                         style={{
-                            position: 'absolute', left: '1rem', bottom: '1rem', zIndex: 2, display: 'flex', alignItems: 'center', gap: 6,
-                            background: 'rgba(26,26,26,0.88)', color: 'white', padding: '0.45rem 0.8rem', borderRadius: '2rem',
-                            fontWeight: 800, fontSize: '0.78rem', backdropFilter: 'blur(6px)'
+                            position: 'absolute', left: 12, bottom: 12, display: 'flex', alignItems: 'center', gap: 6,
+                            background: 'rgba(20,18,15,0.82)', color: 'white', padding: '0.45rem 0.85rem', borderRadius: 999,
+                            fontWeight: 700, fontSize: '0.78rem', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
                         }}
                     >
                         <Box size={15} /> Voir en 3D sur ma table
                     </button>
                 )}
-                {dish.prepTime ? (
-                    <div style={{ position: 'absolute', top: '1rem', left: '1rem', zIndex: 2, display: 'flex', alignItems: 'center', gap: 4, background: 'rgba(255,255,255,0.95)', padding: '0.3rem 0.6rem', borderRadius: '2rem', fontSize: '0.75rem', fontWeight: 700 }}>
-                        <Clock size={13} /> {dish.prepTime} min
-                    </div>
-                ) : null}
-                {isInactive && (
-                    <div style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        backgroundColor: 'rgba(0,0,0,0.4)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        zIndex: 3
-                    }}>
-                        <span style={{
-                            backgroundColor: 'white',
-                            color: 'black',
-                            padding: '0.4rem 0.8rem',
-                            borderRadius: '2rem',
-                            fontWeight: 800,
-                            fontSize: '0.8rem',
-                            boxShadow: '0 4px 15px rgba(0,0,0,0.2)'
-                        }}>
-                            INDISPONIBLE
-                        </span>
-                    </div>
-                )}
-                <div style={{
-                    position: 'absolute',
-                    top: '1rem',
-                    right: '1rem',
-                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                    padding: '0.4rem 0.8rem',
-                    borderRadius: '2rem',
-                    fontWeight: 800,
-                    fontSize: '0.9rem',
-                    boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-                    zIndex: 2,
-                    color: 'var(--glovo-dark)'
-                }}>
-                    {dish.price.toFixed(2)} {currency}
-                </div>
             </div>
 
-            <div style={{
-                padding: '1.5rem',
-                display: 'flex',
-                flexDirection: 'column',
-                flexGrow: 1,
-                justifyContent: 'space-between'
-            }}>
-                <div>
-                    <h3 style={{
-                        fontSize: '1.25rem',
-                        marginBottom: '0.6rem',
-                        fontWeight: 800,
-                        fontFamily: 'var(--font-serif)'
-                    }}>
-                        {dish.name}
-                    </h3>
-                    <p style={{
-                        fontSize: '0.95rem',
-                        lineHeight: 1.6,
-                        color: 'var(--glovo-gray)',
-                        display: '-webkit-box',
-                        WebkitLineClamp: 3,
-                        WebkitBoxOrient: 'vertical',
-                        overflow: 'hidden',
-                        marginBottom: '1.5rem'
-                    }}>
-                        {dish.description}
-                    </p>
-                </div>
-
-                <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    marginTop: 'auto'
-                }}>
-                    <div style={{ display: 'flex', gap: '0.3rem', alignItems: 'center' }}>
-                        {/* Subtle indicator for collection or rating could go here */}
-                        <span style={{ fontSize: '0.8rem', color: 'var(--glovo-green)', fontWeight: 700, backgroundColor: 'rgba(0,160,130,0.08)', padding: '0.2rem 0.5rem', borderRadius: '0.4rem' }}>
-                            {dish.collection?.name || 'Coup de cœur'}
-                        </span>
+            <div style={{ padding: '1.1rem 1.2rem 1.2rem', display: 'flex', flexDirection: 'column', gap: '0.45rem', flexGrow: 1 }}>
+                {tags.length > 0 && (
+                    <div style={{ display: 'flex', gap: 6 }}>
+                        {tags.map((t) => <span key={t} className="eyebrow" style={{ fontSize: '0.65rem', letterSpacing: '0.12em' }}>{t}</span>)}
                     </div>
+                )}
+                <h3 style={{ fontSize: '1.2rem' }}>{dish.name}</h3>
+                <p style={{ fontSize: '0.9rem', lineHeight: 1.55, color: 'var(--ink-soft)', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                    {dish.description}
+                </p>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 'auto', paddingTop: '0.4rem' }}>
+                    <span style={{ fontWeight: 800, fontSize: '1.05rem' }}>
+                        {dish.price.toFixed(2)} <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--ink-soft)' }}>{currency}</span>
+                    </span>
                     <button
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            if (!isInactive) onAdd(dish);
-                        }}
-                        className="btn-primary"
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); if (!inactive) onAdd(dish); }}
+                        disabled={inactive}
+                        aria-label={`Ajouter ${dish.name}`}
                         style={{
-                            padding: '0',
-                            borderRadius: '50%',
-                            width: '42px',
-                            height: '42px',
-                            justifyContent: 'center',
-                            minWidth: '42px',
-                            backgroundColor: isInactive ? '#ccc' : undefined,
-                            cursor: isInactive ? 'not-allowed' : 'pointer'
+                            width: 42, height: 42, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            background: inactive ? '#ddd' : 'var(--brand)', color: 'var(--brand-ink)', boxShadow: '0 8px 18px -6px color-mix(in srgb, var(--brand) 70%, transparent)',
+                            transition: 'transform .2s var(--ease)',
                         }}
-                        disabled={isInactive}
+                        onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.08)'; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; }}
                     >
-                        <Plus size={22} />
+                        <Plus size={20} />
                     </button>
                 </div>
             </div>
-        </div>
+        </article>
     );
 }
